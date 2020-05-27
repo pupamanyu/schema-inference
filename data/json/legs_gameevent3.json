@@ -1,0 +1,1 @@
+{"levelUpActor": {   "currentAccountId": 1,   "originalAccountPlatformId": "JP1",   "originalAccountId": 1,   "championId": 80 }, "gameId": 3, "platformId": "JP1", "legsVersionId": 0.349, "processedTimestamp": 1588952173712, "millisSinceGameStart": 306745, "app": "legs", "type": "LEVEL_UP", "level": 8}

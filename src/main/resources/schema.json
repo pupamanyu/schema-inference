@@ -1,0 +1,72 @@
+{
+  "type" : "struct",
+  "fields" : [ {
+    "name" : "app",
+    "type" : "string",
+    "nullable" : true,
+    "metadata" : { }
+  }, {
+    "name" : "gameId",
+    "type" : "long",
+    "nullable" : true,
+    "metadata" : { }
+  }, {
+    "name" : "legsVersionId",
+    "type" : "double",
+    "nullable" : true,
+    "metadata" : { }
+  }, {
+    "name" : "level",
+    "type" : "long",
+    "nullable" : true,
+    "metadata" : { }
+  }, {
+    "name" : "levelUpActor",
+    "type" : {
+      "type" : "struct",
+      "fields" : [ {
+        "name" : "championId",
+        "type" : "long",
+        "nullable" : true,
+        "metadata" : { }
+      }, {
+        "name" : "currentAccountId",
+        "type" : "long",
+        "nullable" : true,
+        "metadata" : { }
+      }, {
+        "name" : "originalAccountId",
+        "type" : "long",
+        "nullable" : true,
+        "metadata" : { }
+      }, {
+        "name" : "originalAccountPlatformId",
+        "type" : "string",
+        "nullable" : true,
+        "metadata" : { }
+      } ]
+    },
+    "nullable" : true,
+    "metadata" : { }
+  }, {
+    "name" : "millisSinceGameStart",
+    "type" : "long",
+    "nullable" : true,
+    "metadata" : { }
+  }, {
+    "name" : "platformId",
+    "type" : "string",
+    "nullable" : true,
+    "metadata" : { }
+  }, {
+    "name" : "processedTimestamp",
+    "type" : "long",
+    "nullable" : true,
+    "metadata" : { }
+  }, {
+    "name" : "type",
+    "type" : "string",
+    "nullable" : true,
+    "metadata" : { }
+  } ]
+}

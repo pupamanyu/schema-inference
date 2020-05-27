@@ -1,0 +1,23 @@
+package com.example.schemainfer.protogen.utils;
+
+import java.nio.charset.Charset;
+
+public class Constants {
+    // Path to input SEQ files. Hard coded for now...
+    public static String inputFile = "gs://schema-inference-sample-data/internal__legs_gameevents/dt=2020-05-15/h=06/batchid=190936cc-84d9-45f9-af54-81de9f460ee2/000000_0";
+    // Path to output files. Hard coded for now...
+    public static String outputFile = "gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out" ;
+    public static String registeredViewName = "gameevent";
+    public static String SEQUENCE_FIELD_DELIMITER = "\01"; // ^A
+    public static String SEQUENCE_MAP_EQUAL = "\02"; // ^B
+    public static String SEQUENCE_MAP_DELIM = "\03"; // ^C
+    // Field delimimeters of Seq file format
+    // ^A = "|"
+    // ^B = "="
+    // ^C = ","
+
+    public static final String UTF8_ENCODING = "UTF-8";
+
+    // When we encode strings, we always specify UTF8 encoding
+    public static final Charset UTF8_CHARSET = Charset.forName(UTF8_ENCODING);
+}
