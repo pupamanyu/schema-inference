@@ -19,7 +19,7 @@
   <artifactId>protoudf</artifactId>
   <version>0.0.1</version>
   <packaging>jar</packaging>
-  <name>"Riot Protobuf UDF"</name>
+  <name>Protobuf UDF</name>
   <properties>
   <maven-shade-plugin.version>3.2.3</maven-shade-plugin.version>
   </properties>

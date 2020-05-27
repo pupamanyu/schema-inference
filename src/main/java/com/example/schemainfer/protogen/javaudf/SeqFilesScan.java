@@ -31,7 +31,7 @@ public class SeqFilesScan {
 
     public static void main(String[] args) throws IOException, InstantiationException, IllegalAccessException {
 
-        LOG.info("Starting RiotScanSeq");
+        LOG.info("Starting ScanSeq");
 
         SparkConf conf = new SparkConf().setAppName("Read Seq UDF")
                 .setMaster("yarn");
@@ -75,53 +75,84 @@ public class SeqFilesScan {
 
         LOG.info("Values: " + values.toDebugString());
         LOG.info("Count of values: " + rdd.values().count());
-        LOG.info("Finished reading");
 
-        JavaRDD<Map<String, String>> parsedRDD = values.map(new Function<Text, Map<String, String>>() {
-            @Override
-            public Map<String, String> call(Text text) throws Exception {
-                String s = ConvertUtils.bytesToString(text.getBytes(), 0, text.getLength());
-                String[] ss = s.split(Constants.SEQUENCE_FIELD_DELIMITER, -1);
-                String fvalue = ss[2] ;
-                Map<String, String> keyMap = splitFColumnIntoMap(fvalue) ;
-
-                return keyMap;
-            }
-        });
+        JavaRDD<Map<String, String>> parsedRDD = transformTextRDDIntoMap(values);
 
         LOG.info("Parsed RDD: " + parsedRDD.toDebugString());
         LOG.info("Parsed RDD count: " + parsedRDD.count());
-        parsedRDD.saveAsTextFile(Constants.outputFile);
 
         printTop20(parsedRDD);
 
-        JavaRDD<Protomap> protoRDD = parsedRDD.flatMap(new FlatMapFunction<Map<String, String>, Protomap>() {
+        JavaRDD<Protomap> protoRDD = transformFValueIntoProromap(parsedRDD);
+
+        convertRDDtoDataset(spark, protoRDD);
+    }
+
+    private static JavaRDD<String> deriveFValue(JavaRDD<Text> values) {
+        return values.map(new Function<Text, String>() {
             @Override
-            public Iterator<Protomap> call(Map<String, String> seqf3map) throws Exception {
-                Set<String> keyset = seqf3map.keySet() ;
-                List<Protomap> protomapList = new ArrayList<>();
-                List<Row> rows = new ArrayList<Row>();
-                for (String key : keyset) {
-                    Protomap protomap = new Protomap() ;
-                    protomap.setKey(key);
-                    protomap.setType("string");
-                    Row row = RowFactory.create(protomap) ;
-                    protomapList.add(protomap) ;
-                    rows.add(row) ;
-                }
-                return  protomapList.iterator();
+            public String call(Text text) throws Exception {
+                String s = ConvertUtils.bytesToString(text.getBytes(), 0, text.getLength());
+                String[] ss = s.split(Constants.SEQUENCE_FIELD_DELIMITER, -1);
+                String fvalue = ss[2] ;
+
+                return fvalue;
             }
         });
+    }
 
-        StructType structType = new StructType();
-        structType = structType.add("key", DataTypes.StringType, false);
-        structType = structType.add("type", DataTypes.StringType, false);
+    private static JavaRDD<Map<String, String>> transformTextRDDIntoMap(JavaRDD<Text> values) {
+        return values.map(new Function<Text, Map<String, String>>() {
+                @Override
+                public Map<String, String> call(Text text) throws Exception {
+                    String s = ConvertUtils.bytesToString(text.getBytes(), 0, text.getLength());
+                    String[] ss = s.split(Constants.SEQUENCE_FIELD_DELIMITER, -1);
+                    String fvalue = ss[2] ;
+                    Map<String, String> keyMap = splitFColumnIntoMap(fvalue) ;
 
+                    return keyMap;
+                }
+            });
+    }
+
+    private static void convertRDDtoDataset(SparkSession spark, JavaRDD<Protomap> protoRDD) {
         Dataset<Row> dataset = spark.createDataFrame(protoRDD, Protomap.class) ;
         dataset.createOrReplaceTempView(Constants.registeredViewName);
         dataset.printSchema();
-
         dataset.show(5);
+    }
+
+    private static void genProtomapSchema() {
+        StructType structType = new StructType();
+        structType = structType.add("key", DataTypes.StringType, false);
+        structType = structType.add("type", DataTypes.StringType, false);
+    }
+
+    private static JavaRDD<Protomap> transformFValueIntoProromap(JavaRDD<Map<String, String>> parsedRDD) {
+        return parsedRDD.flatMap(new FlatMapFunction<Map<String, String>, Protomap>() {
+                @Override
+                public Iterator<Protomap> call(Map<String, String> seqf3map) throws Exception {
+                    Set<String> keyset = seqf3map.keySet() ;
+                    List<Protomap> protomapList = new ArrayList<>();
+                    List<Row> rows = new ArrayList<Row>();
+                    for (String key : keyset) {
+                        Protomap protomap = new Protomap() ;
+                        protomap.setKey(key);
+                        protomap.setType("string");
+                        Row row = RowFactory.create(protomap) ;
+                        protomapList.add(protomap) ;
+                        rows.add(row) ;
+                    }
+                    return  protomapList.iterator();
+                }
+            });
+    }
+
+    private static void printTop20F(JavaRDD<String> parsedRDD) {
+        List<String> top5List = parsedRDD.take(20);
+        top5List.forEach(s -> {
+            LOG.info(" FValue = " + s);
+        });
     }
 
     private static void printTop20(JavaRDD<Map<String, String>> parsedRDD) {
@@ -143,6 +174,7 @@ public class SeqFilesScan {
      * @return
      */
     private static Map<String, String> splitFColumnIntoMap(String  fvalue) {
+        LOG.info("fValue: " + fvalue) ;
         String[] keyvalues = fvalue.split(Constants.SEQUENCE_MAP_DELIM, -1) ;
         Map<String, String> derivedMap = new HashMap<String, String>() ;
         for (int i=0 ; i < keyvalues.length ; i++) {
@@ -153,6 +185,28 @@ public class SeqFilesScan {
             derivedMap.put(key, value) ;
         }
         return derivedMap ;
+    }
+
+    private static String splitFColumnIntoJson(String  fvalue) {
+        LOG.info("fValue: " + fvalue) ;
+        String[] keyvalues = fvalue.split(Constants.SEQUENCE_MAP_DELIM, -1) ;
+        StringBuilder sb = new StringBuilder("{") ;
+        for (int i=0 ; i < keyvalues.length ; i++) {
+
+            String s = keyvalues[i] ;
+            String[] keyvalue = s.split(Constants.SEQUENCE_MAP_EQUAL, 2) ;
+            String key = keyvalue[0] ;
+            String value = keyvalue[1] ;
+            sb.append("\"") ;
+            sb.append(key) ;
+            sb.append("\"") ;
+            sb.append(":") ;
+            sb.append("\"") ;
+            sb.append(value) ;
+            sb.append("\"") ;
+        }
+        sb.append("},") ;
+        return sb.toString() ;
     }
 
 }
