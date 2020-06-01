@@ -1,0 +1,22 @@
+{
+  "levelUpActor": {
+    "currentAccountId": 2325157897621088,
+    "originalAccountPlatformId": "JP1",
+    "originalAccountId": 2325157897621088,
+    "championId": 516
+  },
+  "gameId": 45,
+  "platformId": "JP1",
+  "legsVersionId": 0.349,
+  "processedTimestamp": 1588952173712,
+  "millisSinceGameStart": 306745,
+  "app": "legs",
+  "type": "LEVEL_UP",
+  "level": 8,
+  "killer": {
+    "currentAccountId": 2325157897621088,
+    "originalAccountPlatformId": "KR",
+    "originalAccountId": 205030650,
+    "championId": 31
+   }
+}

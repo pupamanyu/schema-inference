@@ -5,8 +5,9 @@ import java.nio.charset.Charset;
 public class Constants {
     // Path to input SEQ files. Hard coded for now...
     public static String inputFile = "gs://schema-inference-sample-data/internal__legs_gameevents/dt=2020-05-15/h=06/batchid=190936cc-84d9-45f9-af54-81de9f460ee2/000000_0";
+
     // Path to output files. Hard coded for now...
-    public static String outputFile = "gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out2" ;
+    public static String outputFile = "gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out2";
 
     // View name used in SQL
     public static String registeredViewName = "gameevent";
@@ -20,4 +21,13 @@ public class Constants {
 
     // When we encode strings, we always specify UTF8 encoding
     public static final Charset UTF8_CHARSET = Charset.forName(UTF8_ENCODING);
+
+    public static enum DATATYPES {
+        Integer,
+        Long,
+        Float,
+        Double,
+        Boolean,
+        String
+    }
 }
