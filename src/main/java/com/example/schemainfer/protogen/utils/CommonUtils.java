@@ -1,24 +1,29 @@
 package com.example.schemainfer.protogen.utils;
 
+import com.example.schemainfer.protogen.domain.SchemaCount;
 import com.example.schemainfer.protogen.javaudf.Protomap;
 import com.example.schemainfer.protogen.rules.InferDatatype;
-import lombok.val;
-import org.apache.commons.lang3.StringUtils;
-import org.spark_project.guava.collect.Multimap;
-
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.spark.api.java.JavaRDD;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.spark_project.guava.collect.Multimap;
 
 public class CommonUtils {
 
-    private static Pattern p = Pattern.compile("^[a-zA-Z]*$") ;
+
+    private static Pattern p = Pattern.compile("^[a-zA-Z]*$");
+    private static String ss = ".*[a-zA-Z]+.*";
+    private static Pattern p2;
+
 
     public static void printMultiMap(Multimap<String, String> seqf3map) {
         StringBuilder sb = new StringBuilder() ;
@@ -42,11 +47,15 @@ public class CommonUtils {
     }
 
     public static boolean isAlpha2(String s) {
-        return p.matcher(s).find() ;
+        return p.matcher(s).find();
+    }
+
+    public static boolean isAlpha3(String s) {
+        return s.matches(ss);
     }
 
     public static boolean isAlpha(String s) {
-        return StringUtils.isAlpha(s) ;
+        return StringUtils.isAlpha(s);
     }
 
     public static boolean isFloat(String input1) {
@@ -84,6 +93,13 @@ public class CommonUtils {
         }
     }
 
+    private static void printTop20F(JavaRDD<String> parsedRDD) {
+        List<String> top5List = parsedRDD.take(20);
+        top5List.forEach((s) -> {
+            System.out.println(" FValue = " + s);
+        });
+    }
+
     public static boolean isPureAscii(String v) {
         byte bytearray []  = v.getBytes();
         CharsetDecoder d = Charset.forName("US-ASCII").newDecoder();
@@ -95,6 +111,42 @@ public class CommonUtils {
             return false;
         }
         return true;
+    }
+
+    private static Map<String, Long> sortMap(Map<String, Long> unSortedMap) {
+        LinkedHashMap<String, Long> reverseSortedMap = new LinkedHashMap<>();
+
+        //Use Comparator.reverseOrder() for reverse ordering
+        unSortedMap.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .forEachOrdered(x -> reverseSortedMap.put(x.getKey(), x.getValue()));
+
+        return reverseSortedMap ;
+    }
+
+    public static List<SchemaCount> printDistinctObjectNodesCount(Map<String, Long> objectNodeLongMap) {
+        Map<String, Long> sorttedMap = sortMap(objectNodeLongMap) ;
+
+        List<SchemaCount> schemaCountList = new ArrayList();
+        Iterator var2 = sorttedMap.entrySet().iterator();
+        int i=0 ;
+
+        while(var2.hasNext()) {
+            if (i > 20) {
+                break ;
+            }
+            Entry<String, Long> entry = (Entry)var2.next();
+            System.out.println("Distinct ObjectNode: " + (String)entry.getKey());
+            System.out.println("Distinct count: " + entry.getValue());
+            SchemaCount schemaCount = new SchemaCount();
+            schemaCount.setSchema((String)entry.getKey());
+            schemaCount.setCount((Long)entry.getValue());
+            schemaCountList.add(schemaCount);
+            i++ ;
+        }
+
+        return schemaCountList;
     }
 
 }

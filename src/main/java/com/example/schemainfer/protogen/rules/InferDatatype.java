@@ -9,21 +9,20 @@ import java.text.DecimalFormat;
 public class InferDatatype {
 
     public static String determineInferDatatype(String instr) {
-        if (instr == null || instr.isEmpty()) {
-            return null ;
-        }
-        if (CommonUtils.isBoolean(instr)) {
-            return Constants.DATATYPES.Boolean.name() ;
-        } else if (CommonUtils.isAlpha(instr)) {
-            return Constants.DATATYPES.String.name() ;
-        } else if (StringUtils.isNumeric(instr)) {
-            return Constants.DATATYPES.Integer.name() ;
-        } else if (CommonUtils.isDouble(instr)) {
-            return Constants.DATATYPES.Double.name() ;
-        }  else if (CommonUtils.isFloat(instr)) {
-            return Constants.DATATYPES.Float.name() ;
+        if (instr != null && !instr.isEmpty()) {
+            if (CommonUtils.isBoolean(instr)) {
+                return Constants.DATATYPES.Boolean.name();
+            } else if (CommonUtils.isAlpha3(instr)) {
+                return Constants.DATATYPES.String.name();
+            } else if (StringUtils.isNumeric(instr)) {
+                return Constants.DATATYPES.Integer.name();
+            } else if (CommonUtils.isDouble(instr)) {
+                return Constants.DATATYPES.Double.name();
+            } else {
+                return CommonUtils.isFloat(instr) ? Constants.DATATYPES.Float.name() : Constants.DATATYPES.Null.name();
+            }
         } else {
-            return Constants.DATATYPES.Boolean.name() ;
+            return null;
         }
     }
 

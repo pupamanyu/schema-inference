@@ -1,6 +1,7 @@
 package com.example.schemainfer.protogen.utils;
 
 import com.example.schemainfer.protogen.javaudf.Protomap;
+import com.example.schemainfer.protogen.json.EventJsonSchema;
 import com.example.schemainfer.protogen.rules.InferDatatype;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONException;
@@ -140,6 +141,55 @@ public class JsonUtils {
             protomap.setEntity(key);
             protomap.setType(valueOfentityKey);
             protomapList.add(protomap);
+        }
+    }
+
+    public static void compileJsonProperties(EventJsonSchema eventJsonSchema) {
+        final Map<String, Object> additionalProperties = eventJsonSchema.getAdditionalProperties();
+        Iterator var2 = additionalProperties.entrySet().iterator();
+
+        System.out.println("------------------------------------");
+        while(var2.hasNext()) {
+            Map.Entry<String, Object> entry = (Map.Entry) var2.next();
+            System.out.println("\t1)Property Name : " + (String)entry.getKey());
+            System.out.println("\t1)Property Value: " + entry.getValue());
+            if (entry.getValue() instanceof LinkedHashMap) {
+                compileProperties((LinkedHashMap) entry.getValue(), 1) ;
+            } else {
+                if (entry.getValue() instanceof String) {
+                    if (isJSONValid((String) entry.getValue())) {
+                        System.out.println("\t\t" +") Value Class: " + entry.getValue().getClass() + " IS a JsON") ;
+                    } else {
+                        System.out.println("\t\t" +") Value Class: " + entry.getValue().getClass() + " IS NOT JsON") ;
+                    }
+                }
+            }
+        }
+    }
+
+    public static void compileProperties(LinkedHashMap propertiesMap, int i) {
+        Iterator var2 = propertiesMap.entrySet().iterator();
+
+        while(var2.hasNext()) {
+            Map.Entry<String, Object> entry = (Map.Entry) var2.next();
+            System.out.println("\t\t" + i+") Name : " + (String) entry.getKey());
+            System.out.println("\t\t" + i+") Value: " + entry.getValue());
+            if (entry.getValue().equals("object")) {
+                System.out.println("\t\t\t" + i + ") ------------- Value OBJECT: " + entry.getValue());
+            }
+            if (entry.getValue() instanceof LinkedHashMap) {
+                compileProperties((LinkedHashMap) entry.getValue(), i + 1) ;
+            } else {
+                if (entry.getValue() instanceof String) {
+                    if (isJSONValid((String) entry.getValue())) {
+                        System.out.println("\t\t" + i+") Value Class: " + entry.getValue().getClass() + " IS a JsON") ;
+                    } else {
+                        System.out.println("\t\t" + i+") Value Class: " + entry.getValue().getClass() + " IS NOT JsON") ;
+                    }
+                } else {
+                    System.out.println("\t\t" + i+") Value Class NEW : " + entry.getValue().getClass()) ;
+                }
+            }
         }
     }
 }
