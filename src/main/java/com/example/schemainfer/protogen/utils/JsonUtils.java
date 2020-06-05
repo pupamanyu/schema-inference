@@ -84,7 +84,7 @@ public class JsonUtils {
             // String datatype = InferDatatype.determineInferDatatype(jsonObj.getString(k)) ;
             entityMap.put(k, jsonObj.getString(k));
 
-            // Uncomment if there are more than 2 levels deep of map found
+            // Uncomment : Recursion: if there are more than 2 levels deep of map found. Not tested yet
             // checkAndProcessIfJson(k, jsonObj.getString(k), entityMap, protomapList) ;
         }
         return entityMap;
@@ -144,52 +144,54 @@ public class JsonUtils {
         }
     }
 
-    public static void compileJsonProperties(EventJsonSchema eventJsonSchema) {
+    public static void printJsonProperties(EventJsonSchema eventJsonSchema) {
         final Map<String, Object> additionalProperties = eventJsonSchema.getAdditionalProperties();
-        Iterator var2 = additionalProperties.entrySet().iterator();
-
-        System.out.println("------------------------------------");
-        while(var2.hasNext()) {
-            Map.Entry<String, Object> entry = (Map.Entry) var2.next();
-            System.out.println("\t1)Property Name : " + (String)entry.getKey());
-            System.out.println("\t1)Property Value: " + entry.getValue());
-            if (entry.getValue() instanceof LinkedHashMap) {
-                compileProperties((LinkedHashMap) entry.getValue(), 1) ;
-            } else {
-                if (entry.getValue() instanceof String) {
-                    if (isJSONValid((String) entry.getValue())) {
-                        System.out.println("\t\t" +") Value Class: " + entry.getValue().getClass() + " IS a JsON") ;
-                    } else {
-                        System.out.println("\t\t" +") Value Class: " + entry.getValue().getClass() + " IS NOT JsON") ;
-                    }
-                }
-            }
+        if (additionalProperties != null && additionalProperties.size() > 0) {
+            additionalProperties.entrySet().stream()
+                    .forEach(entry -> {
+                        System.out.println("0) Property Name : " + (String) entry.getKey());
+                        System.out.println("0) Property Value: " + entry.getValue());
+                        if (entry.getValue() instanceof LinkedHashMap) {
+                            compileProperties((LinkedHashMap) entry.getValue(), 1);
+                        } else {
+                            if (entry.getValue() instanceof String) {
+                                if (isJSONValid((String) entry.getValue())) {
+                                    System.out.println("\t\t" + ") Value Class: " + entry.getValue().getClass() + " IS a JsON");
+                                } else {
+                                    System.out.println("\t\t" + ") Value Class: " + entry.getValue().getClass() + " IS NOT JsON");
+                                }
+                            }
+                        }
+                    });
         }
     }
 
-    public static void compileProperties(LinkedHashMap propertiesMap, int i) {
-        Iterator var2 = propertiesMap.entrySet().iterator();
-
-        while(var2.hasNext()) {
-            Map.Entry<String, Object> entry = (Map.Entry) var2.next();
-            System.out.println("\t\t" + i+") Name : " + (String) entry.getKey());
-            System.out.println("\t\t" + i+") Value: " + entry.getValue());
-            if (entry.getValue().equals("object")) {
-                System.out.println("\t\t\t" + i + ") ------------- Value OBJECT: " + entry.getValue());
-            }
-            if (entry.getValue() instanceof LinkedHashMap) {
-                compileProperties((LinkedHashMap) entry.getValue(), i + 1) ;
-            } else {
-                if (entry.getValue() instanceof String) {
-                    if (isJSONValid((String) entry.getValue())) {
-                        System.out.println("\t\t" + i+") Value Class: " + entry.getValue().getClass() + " IS a JsON") ;
-                    } else {
-                        System.out.println("\t\t" + i+") Value Class: " + entry.getValue().getClass() + " IS NOT JsON") ;
-                    }
-                } else {
-                    System.out.println("\t\t" + i+") Value Class NEW : " + entry.getValue().getClass()) ;
-                }
-            }
+    public static void compileProperties(LinkedHashMap<String, Object> propertiesMap, int i) {
+        if (propertiesMap != null && propertiesMap.size() > 0) {
+            propertiesMap.entrySet().stream()
+                    .forEach(entry -> {
+                        System.out.println(CommonUtils.printTabs(i) + i + ") Name : " + (String) entry.getKey());
+                        System.out.println(CommonUtils.printTabs(i) + i + ") Value: " + entry.getValue());
+                        if (entry.getValue().equals("object")) {
+                            System.out.println(CommonUtils.printTabs(i) + i + ") Value OBJECT: " + entry.getValue());
+                        }
+                        if (entry.getValue() instanceof LinkedHashMap) {
+                            // Recursion
+                            compileProperties((LinkedHashMap) entry.getValue(), i + 1);
+                        } else {
+                            if (entry.getValue() instanceof String) {
+                                if (isJSONValid((String) entry.getValue())) {
+                                    System.out.println(CommonUtils.printTabs(i) + i + ") Value Class: " + entry.getValue().getClass() + " IS a JsON");
+                                } else {
+                                    System.out.println(CommonUtils.printTabs(i) + i + ") Value Class: " + entry.getValue().getClass() + " IS NOT JsON");
+                                }
+                            } else {
+                                System.out.println(CommonUtils.printTabs(i) + i + ") Value Class NEW : " + entry.getValue().getClass());
+                            }
+                        }
+                    });
         }
     }
+
+
 }

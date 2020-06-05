@@ -125,6 +125,14 @@ public class CommonUtils {
         return reverseSortedMap ;
     }
 
+    public static String printTabs(int numtabs) {
+        StringBuilder sb = new StringBuilder() ;
+        for (int i=0 ; i<numtabs ; i++) {
+            sb.append("\t") ;
+        }
+        return sb.toString() ;
+    }
+
     public static List<SchemaCount> printDistinctObjectNodesCount(Map<String, Long> objectNodeLongMap) {
         Map<String, Long> sorttedMap = sortMap(objectNodeLongMap) ;
 

@@ -10,6 +10,7 @@ import com.example.schemainfer.protogen.utils.CommonUtils;
 import com.example.schemainfer.protogen.utils.Constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.spark.SparkConf;
@@ -17,6 +18,9 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.*;
+import org.apache.spark.sql.api.java.UDF0;
+import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.types.DataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.xml.Source;
@@ -37,15 +41,24 @@ public class SeqFilesScan {
         LOG.info("Starting ScanSeq");
         SparkConf conf = (new SparkConf()).setAppName("Read Seq UDF").
                 set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-              //   .setMaster("local[2]").set("spark.driver.host", "localhost") ;
-                .set("spark.eventLog.enabled", "true").setMaster("yarn");
+                 .setMaster("local[2]").set("spark.driver.host", "localhost") ;
+               // .set("spark.eventLog.enabled", "true").setMaster("yarn");
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.setLogLevel("INFO");
         SparkSession spark = SparkSession.builder().config(conf).getOrCreate();
 
-        readValuesAsText(spark, sc);
+       // readValuesAsText(spark, sc);
        // readValuesAsString(spark, sc) ;
-       // readValuesAsStringO(spark, sc) ;
+        readValuesAsStringO(spark, sc) ;
+
+        spark.udf().register("PSCHEMA", new UDF1<String, String>() {
+            @Override
+            public String call(String inStr) {
+                return (inStr);
+            }
+        }, DataTypes.StringType);
+
+         spark.sql("SELECT PSCHEMA(schema) AS jsonschema FROM gameevent").show();
     }
 
     private static String getSchemaFromFile() throws IOException {
@@ -92,9 +105,7 @@ public class SeqFilesScan {
         JavaRDD<Text> values = rdd.values();
         LOG.info("Values: " + values.toDebugString());
         LOG.info("Count of values: " + rdd.values().count());
-        JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap31(values).filter((v1) -> {
-            return v1 != null;
-        });
+        JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap31(values) ;
         LOG.info("Parsed RDD: " + parsedRDD.toDebugString());
         LOG.info("Parsed RDD count: " + parsedRDD.count());
         JavaRDD<ObjectNode> distinctObjectNodeRDD = parsedRDD.distinct();
@@ -108,7 +119,6 @@ public class SeqFilesScan {
 
     private static void convertRDDtoDataset(SparkSession spark, JavaRDD<Protomap> protoRDD) {
         Dataset<Row> dataset = spark.createDataFrame(protoRDD, Protomap.class);
-        dataset.createOrReplaceTempView(Constants.registeredViewName);
         dataset.printSchema();
         dataset.show(5);
     }
@@ -124,19 +134,27 @@ public class SeqFilesScan {
     }
 
     private static JavaRDD<Protomap> transformFValueIntoProromap3(JavaRDD<Text> values) {
-        return values.flatMap(new ProcessTextColumn());
+        return values.flatMap(new ProcessTextColumn()).filter((v1) -> {
+            return v1 != null;
+        });
     }
 
     private static JavaRDD<ObjectNode> transformFValueIntoProromap31(JavaRDD<Text> values) {
-        return values.map(new ProcessTextColumn2());
+        return values.map(new ProcessTextColumn2()).filter((v1) -> {
+            return v1 != null;
+        });
     }
 
     private static JavaRDD<Protomap> transformFValueIntoProromap2S(JavaRDD<String> values) {
-        return values.flatMap(new ProcessStringColumn());
+        return values.flatMap(new ProcessStringColumn()).filter((v1) -> {
+            return v1 != null;
+        });
     }
 
     private static JavaRDD<ObjectNode> transformFValueIntoProromap2O(JavaRDD<String> values) {
-        return values.map(new ProcessStringColumnAsObjectNode());
+        return values.map(new ProcessStringColumnAsObjectNode()).filter((v1) -> {
+            return v1 != null;
+        });
     }
 
     private static void getSchemaColumnDataset(Dataset<Row> ds) {

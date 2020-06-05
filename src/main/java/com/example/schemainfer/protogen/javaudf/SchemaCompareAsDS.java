@@ -3,11 +3,11 @@ package com.example.schemainfer.protogen.javaudf;
 import java.io.IOException;
 import java.util.*;
 
+import com.example.schemainfer.protogen.json.CompareSchemas;
 import com.example.schemainfer.protogen.json.EventJsonSchema;
 import com.example.schemainfer.protogen.utils.JsonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.spark.SparkConf;
-import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
@@ -35,6 +35,7 @@ public class SchemaCompareAsDS {
         System.out.println("DATAET count: " + ds.count());
         List<EventJsonSchema> eventsList = getSchemaColumnDataset(spark, ds);
         System.out.println("JSON Events count: " + eventsList.size());
+        CompareSchemas.compareTopJson(eventsList.get(0), eventsList.get(1)) ;
     }
 
     private static List<EventJsonSchema> getSchemaColumnDataset(SparkSession spark, Dataset<Row> ds) {
@@ -60,7 +61,7 @@ public class SchemaCompareAsDS {
         EventJsonSchema eventJsonSchema = null;
         try {
             eventJsonSchema = mapper.readValue(jsonString, EventJsonSchema.class);
-            JsonUtils.compileJsonProperties(eventJsonSchema);
+            JsonUtils.printJsonProperties(eventJsonSchema);
         } catch (IOException e) {
             e.printStackTrace();
         }
