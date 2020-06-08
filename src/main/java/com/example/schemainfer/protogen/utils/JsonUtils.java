@@ -170,10 +170,10 @@ public class JsonUtils {
         if (propertiesMap != null && propertiesMap.size() > 0) {
             propertiesMap.entrySet().stream()
                     .forEach(entry -> {
-                        System.out.println(CommonUtils.printTabs(i) + i + ") Name : " + (String) entry.getKey());
-                        System.out.println(CommonUtils.printTabs(i) + i + ") Value: " + entry.getValue());
+                        System.out.println(CommonUtils.printTabs(i) + " Name : " + (String) entry.getKey());
+                        System.out.println(CommonUtils.printTabs(i) + " Value: " + entry.getValue());
                         if (entry.getValue().equals("object")) {
-                            System.out.println(CommonUtils.printTabs(i) + i + ") Value OBJECT: " + entry.getValue());
+                            System.out.println(CommonUtils.printTabs(i) + " Value OBJECT: " + entry.getValue());
                         }
                         if (entry.getValue() instanceof LinkedHashMap) {
                             // Recursion
@@ -181,12 +181,12 @@ public class JsonUtils {
                         } else {
                             if (entry.getValue() instanceof String) {
                                 if (isJSONValid((String) entry.getValue())) {
-                                    System.out.println(CommonUtils.printTabs(i) + i + ") Value Class: " + entry.getValue().getClass() + " IS a JsON");
+                                    System.out.println(CommonUtils.printTabs(i) + " Value Class: " + entry.getValue().getClass() + " IS a JsON");
                                 } else {
-                                    System.out.println(CommonUtils.printTabs(i) + i + ") Value Class: " + entry.getValue().getClass() + " IS NOT JsON");
+                                    System.out.println(CommonUtils.printTabs(i) + " Value Class: " + entry.getValue().getClass() + " IS NOT JsON");
                                 }
                             } else {
-                                System.out.println(CommonUtils.printTabs(i) + i + ") Value Class NEW : " + entry.getValue().getClass());
+                                System.out.println(CommonUtils.printTabs(i) + " Value Class NEW : " + entry.getValue().getClass());
                             }
                         }
                     });

@@ -1,0 +1,7 @@
+{
+  currentAccountId={
+  type=integer
+}, originalAccountPlatformId={type=string}, originalAccountId={type=integer}, championId={
+type=integer
+}
+}

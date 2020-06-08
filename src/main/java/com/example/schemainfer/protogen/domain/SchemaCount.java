@@ -5,6 +5,7 @@ import java.io.Serializable;
 public class SchemaCount implements Serializable {
     String schema;
     Long count;
+    Float percent;
 
     public SchemaCount() {
     }
@@ -23,5 +24,13 @@ public class SchemaCount implements Serializable {
 
     public void setCount(Long count) {
         this.count = count;
+    }
+
+    public Float getPercent() {
+        return percent;
+    }
+
+    public void setPercent(Float percent) {
+        this.percent = percent;
     }
 }
