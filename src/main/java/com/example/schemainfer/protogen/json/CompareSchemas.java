@@ -1,8 +1,11 @@
 package com.example.schemainfer.protogen.json;
 
+import com.example.schemainfer.protogen.javaudf.SeqFilesScan;
 import com.example.schemainfer.protogen.utils.CommonUtils;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,7 +13,9 @@ import java.util.stream.Collectors;
 
 public class CompareSchemas {
 
-    public static void compareTwoSchemas(EventJsonSchema firstSchema, EventJsonSchema secondSchema) {
+    private static final Logger LOG = LoggerFactory.getLogger(CompareSchemas.class);
+
+    public static EventJsonSchema compareTwoSchemas(EventJsonSchema firstSchema, EventJsonSchema secondSchema) {
         final Map<String, Object> firstAdditionalProperties = firstSchema.getAdditionalProperties();
         final Map<String, Object> secondAdditionalProperties = secondSchema.getAdditionalProperties();
 
@@ -24,7 +29,15 @@ public class CompareSchemas {
         Map<String, Object> mergedMap = comapreMaps.compareUsingGauva("additionalproperties", keyHierarchy) ;
         CommonUtils.printMap(mergedMap, "Gauava AFTER-Merge: ");
 
-       // System.out.println("KeyHierarchy: " + comapreMaps.getKeyHierarchy()) ;
+        EventJsonSchema mergedJsonSchema = new EventJsonSchema() ;
+        mergedJsonSchema.setType(firstSchema.getType());
+        final Object mergedProperties = mergedMap.get("properties");
+        mergedJsonSchema.setAdditionalProperty("properties", mergedProperties);
+        LOG.info("-----------------------------------------------------------") ;
+        LOG.info("FINAL MERGED EventJsonSchema SCHEMA: " + mergedJsonSchema.toString())         ;
+        return mergedJsonSchema ;
+
+       // LOG.info("KeyHierarchy: " + comapreMaps.getKeyHierarchy()) ;
        // compareUsingGauva();
     }
 
@@ -37,9 +50,9 @@ public class CompareSchemas {
     public static boolean areEqualKeySets(Map<String, Object> first, Map<String, Object> second) {
         boolean isMatch = first.keySet().equals(second.keySet());
         if (!isMatch) {
-            System.out.println("NOt a match in EqualKeySets") ;
+            LOG.info("NOt a match in EqualKeySets") ;
         } else {
-            System.out.println("ALL match in EqualKeySets") ;
+            LOG.info("ALL match in EqualKeySets") ;
         }
         return isMatch ;
     }
@@ -52,9 +65,9 @@ public class CompareSchemas {
                 });
 
         if (!isMatch) {
-            System.out.println("NOt a match in Top JSON Values") ;
+            LOG.info("Not a match in Top JSON Values") ;
         } else {
-            System.out.println("ALL match in Top JSON Values") ;
+            LOG.info("ALL match in Top JSON Values") ;
         }
 
         return isMatch ;

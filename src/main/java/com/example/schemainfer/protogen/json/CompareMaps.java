@@ -1,9 +1,12 @@
 package com.example.schemainfer.protogen.json;
 
 import com.example.schemainfer.protogen.functions.MergeBiFunction;
+import com.example.schemainfer.protogen.javaudf.SeqFilesScan;
 import com.example.schemainfer.protogen.utils.CommonUtils;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,50 +14,51 @@ import java.util.List;
 import java.util.Map;
 
 public class CompareMaps {
-    List<Map<String, Object>> missingObjectsList = new ArrayList<>();
+    private static final Logger LOG = LoggerFactory.getLogger(CompareMaps.class);
 
+    List<Map<String, Object>> missingObjectsList = new ArrayList<>();
     List<String> keyHierarchy = new ArrayList<>() ;
     Map<String, Object> first ;
     Map<String, Object> second ;
-    int iterationNum ;
+    int depthLevel;
     Map<String, Object> mergedFinalMap;
 
-    public CompareMaps(Map<String, Object> leftObject, Map<String, Object> rightObject, int iterationNum) {
+    public CompareMaps(Map<String, Object> leftObject, Map<String, Object> rightObject, int depthLevel) {
         this.first = leftObject;
         this.second = rightObject;
-        this.iterationNum = iterationNum ;
+        this.depthLevel = depthLevel;
         mergedFinalMap = new HashMap<>(first) ;
-        System.out.println(CommonUtils.printTabs(this.iterationNum) + " ENTRY: entries on Right :" + rightObject.size());
-        System.out.println(CommonUtils.printTabs(this.iterationNum) + " ENTRY: entries on Left :" + leftObject.size());
+        LOG.info(CommonUtils.printTabs(this.depthLevel) + " ENTRY: entries on Right :" + rightObject.size());
+        LOG.info(CommonUtils.printTabs(this.depthLevel) + " ENTRY: entries on Left :" + leftObject.size());
     }
 
     public Map<String, Object> compareUsingGauva(String mainKeyName, List<String> keyHierarchy) {
         boolean issame = true ;
         this.keyHierarchy = keyHierarchy ;
-        System.out.println(CommonUtils.printTabs(this.iterationNum) + " Starting compareUsingGauva :" + mainKeyName) ;
+        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Starting compareUsingGauva :" + mainKeyName) ;
         MapDifference<String, Object> diff = Maps.difference(first, second);
         keyHierarchy.add(mainKeyName) ;
 
         if (diff.entriesOnlyOnRight().size() != diff.entriesOnlyOnLeft().size()) {
             issame = false ;
-            System.out.println(CommonUtils.printTabs(this.iterationNum) + " ----------------------------------------------------------");
-            System.out.println(CommonUtils.printTabs(this.iterationNum) + " Different # of entries: " + diff.entriesDiffering().size());
-            System.out.println(CommonUtils.printTabs(this.iterationNum) + " Missing entries on Right :" + diff.entriesOnlyOnRight().size());
-            System.out.println(CommonUtils.printTabs(this.iterationNum) + " Missing entries on Left  :" + diff.entriesOnlyOnLeft().size());
+            LOG.info(CommonUtils.printTabs(this.depthLevel) + " ----------------------------------------------------------");
+            LOG.info(CommonUtils.printTabs(this.depthLevel) + " Different # of entries: " + diff.entriesDiffering().size());
+            LOG.info(CommonUtils.printTabs(this.depthLevel) + " Missing entries on Right :" + diff.entriesOnlyOnRight().size());
+            LOG.info(CommonUtils.printTabs(this.depthLevel) + " Missing entries on Left  :" + diff.entriesOnlyOnLeft().size());
             Map<String, Object> entriesOnlyOnRight = diff.entriesOnlyOnRight();
             Map<String, Object> entriesOnlyOnLeft = diff.entriesOnlyOnLeft();
             Map<String, Object> entriesInCommon = diff.entriesInCommon();
-            System.out.println(CommonUtils.printTabs(this.iterationNum) + " Mismatch in number of entries: " + entriesOnlyOnRight.size() + " :: " + entriesOnlyOnLeft.size());
-            addMissingEntry(entriesOnlyOnLeft, this.iterationNum, mergedFinalMap);
-            addMissingEntry(entriesOnlyOnRight, this.iterationNum, mergedFinalMap);
+            LOG.info(CommonUtils.printTabs(this.depthLevel) + " Mismatch in number of entries: " + entriesOnlyOnRight.size() + " :: " + entriesOnlyOnLeft.size());
+            addMissingEntry(entriesOnlyOnLeft, this.depthLevel, mergedFinalMap);
+            addMissingEntry(entriesOnlyOnRight, this.depthLevel, mergedFinalMap);
         }
 
         if (diff.entriesDiffering() != null && diff.entriesDiffering().size() > 0) {
             issame = false ;
-            mergedFinalMap = compareMapsDifferences(first, second, this.iterationNum + 1, mainKeyName) ;
+            mergedFinalMap = compareMapsDifferences(first, second, this.depthLevel + 1, mainKeyName) ;
         }
 
-        System.out.println(CommonUtils.printTabs(this.iterationNum) + " EXIT: Merged Total Entries ON EXIT:" + mergedFinalMap.size());
+        LOG.info(CommonUtils.printTabs(this.depthLevel) + " EXIT: Merged Total Entries ON EXIT:" + mergedFinalMap.size());
 
         return mergedFinalMap;
     }
@@ -71,30 +75,31 @@ public class CompareMaps {
 
                 entriesDiffering.entrySet().stream()
                         .forEach(entry -> {
-                            System.out.println(CommonUtils.printSubtabs(this.iterationNum, i) + " Name : " + (String) entry.getKey());
+                            LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " Name : " + (String) entry.getKey());
                             String key = entry.getKey();
                             final MapDifference.ValueDifference<Object> valueDiff = entry.getValue();
-                            System.out.println(CommonUtils.printSubtabs(this.iterationNum, i) + " DIFF-LEFT  = " + valueDiff.leftValue());
-                            System.out.println(CommonUtils.printSubtabs(this.iterationNum, i) + " DIFF-RIGHT = " + valueDiff.rightValue());
+                            LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " DIFF-LEFT  = " + valueDiff.leftValue());
+                            LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " DIFF-RIGHT = " + valueDiff.rightValue());
                             if (valueDiff.leftValue() instanceof Map && valueDiff.rightValue() instanceof Map) {
                                 final MapDifference diff2 = Maps.difference((Map) valueDiff.leftValue(), (Map) valueDiff.rightValue());
                                 if (diff2.entriesDiffering() != null && diff2.entriesDiffering().size() > 0) {
                                     keyHierarchy.add(key);
                                     compareMapsDifferences(valueDiff.leftValue(), valueDiff.rightValue(), i + 1, key);
                                 } else {
-                                    CompareMaps compareMaps = new CompareMaps(diff2.entriesOnlyOnLeft(), diff2.entriesOnlyOnRight(), this.iterationNum + 1);
+                                    // Recursion
+                                    CompareMaps compareMaps = new CompareMaps(diff2.entriesOnlyOnLeft(), diff2.entriesOnlyOnRight(), this.depthLevel + 1);
                                     compareMaps.compareUsingGauva(key, keyHierarchy);
                                 }
                             } else {
-                                System.out.println(CommonUtils.printSubtabs(this.iterationNum, i) + " KEY: " + mainKey + " \t--> " + key + "\tDIFF-LEFT  = " + valueDiff.leftValue());
-                                System.out.println(CommonUtils.printSubtabs(this.iterationNum, i) + " KEY: " + mainKey + " \t--> " + key + "\tDIFF-RIGHT = " + valueDiff.rightValue());
-                                System.out.println(CommonUtils.printSubtabs(this.iterationNum, i) + " Key Hierarchy of this instance: " + keyHierarchy);
-                                System.out.println(CommonUtils.printSubtabs(this.iterationNum, i) + " ENTRYYY : " + entry.getClass() + " " + entry.toString());
+                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " KEY: " + mainKey + " \t--> " + key + "\tDIFF-LEFT  = " + valueDiff.leftValue());
+                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " KEY: " + mainKey + " \t--> " + key + "\tDIFF-RIGHT = " + valueDiff.rightValue());
+                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " Key Hierarchy of this instance: " + keyHierarchy);
+                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " ENTRYYY : " + entry.getClass() + " " + entry.toString());
 
-                                System.out.println(CommonUtils.printSubtabs(this.iterationNum, i) + " mergedDiffMap BEFORE : " +  mergedDiffMap.toString());
+                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " mergedDiffMap BEFORE : " +  mergedDiffMap.toString());
                                 final Object mergedfinal = mergedDiffMap.merge(key, ((Map) right).get(key), new MergeBiFunction() ) ;
-                                System.out.println(CommonUtils.printSubtabs(this.iterationNum, i) + " mergedfinal  : " +  mergedfinal.toString());
-                                System.out.println(CommonUtils.printSubtabs(this.iterationNum, i) + " mergedDiffMap AFTER : " +  mergedDiffMap.toString());
+                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " mergedfinal  : " +  mergedfinal.toString());
+                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " mergedDiffMap AFTER : " +  mergedDiffMap.toString());
                             }
                         });
             }
@@ -107,8 +112,8 @@ public class CompareMaps {
         if (missingEntriesMap != null && missingEntriesMap.size() > 0) {
             missingEntriesMap.entrySet().stream()
                     .forEach(e -> {
-                        System.out.println(CommonUtils.printTabs(this.iterationNum) + " Missing: " + e.getKey() + "  :\t" + e.getValue() + "  :\t" + e.getValue().getClass());
-                        System.out.println(CommonUtils.printTabs(this.iterationNum) + " Key Hierarchy of this Missing instance: " + keyHierarchy) ;
+                        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Missing: " + e.getKey() + "  :\t" + e.getValue() + "  :\t" + e.getValue().getClass());
+                        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Key Hierarchy of this Missing instance: " + keyHierarchy) ;
                     });
 
             entriesToAddIn.putAll(missingEntriesMap);

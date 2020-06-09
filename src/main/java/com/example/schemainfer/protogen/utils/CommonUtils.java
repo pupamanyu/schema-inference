@@ -2,6 +2,7 @@ package com.example.schemainfer.protogen.utils;
 
 import com.example.schemainfer.protogen.domain.SchemaCount;
 import com.example.schemainfer.protogen.javaudf.Protomap;
+import com.example.schemainfer.protogen.javaudf.SeqFilesScan;
 import com.example.schemainfer.protogen.rules.InferDatatype;
 
 import java.nio.ByteBuffer;
@@ -22,7 +23,7 @@ import org.spark_project.guava.collect.Multimap;
 
 public class CommonUtils {
 
-
+    private static final Logger LOG = LoggerFactory.getLogger(CommonUtils.class);
     private static Pattern p = Pattern.compile("^[a-zA-Z]*$");
     private static String ss = ".*[a-zA-Z]+.*";
     private static Pattern p2;
@@ -45,14 +46,14 @@ public class CommonUtils {
             Map.Entry<String, String> entry = iterator.next();
             int keyValuesSize = seqf3map.get(entry.getKey()).size();
             if (entry.getValue() != null) {
-                System.out.println("----\t MKey: " + entry.getKey() + " \t size: " + keyValuesSize + "\t" + "MValue: " + entry.getValue());
+                LOG.info("----\t MKey: " + entry.getKey() + " \t size: " + keyValuesSize + "\t" + "MValue: " + entry.getValue());
             }
         }
     }
 
     public static void printProtomapList(List<Protomap> protomapList) {
         for (Protomap protomap : protomapList) {
-            System.out.println("Protoo: key:\t" + protomap.getKey() + " Entity: \t" + protomap.getEntity() + "\t Type: " + protomap.getType());
+            LOG.info("Protoo: key:\t" + protomap.getKey() + " Entity: \t" + protomap.getEntity() + "\t Type: " + protomap.getType());
         }
     }
 
@@ -106,7 +107,7 @@ public class CommonUtils {
     private static void printTop20F(JavaRDD<String> parsedRDD) {
         List<String> top5List = parsedRDD.take(20);
         top5List.forEach((s) -> {
-            System.out.println(" FValue = " + s);
+            LOG.info(" FValue = " + s);
         });
     }
 
@@ -171,16 +172,15 @@ public class CommonUtils {
                 break;
             }
             Entry<String, Long> entry = (Entry) var2.next();
-            System.out.println("Distinct ObjectNode: " + (String) entry.getKey());
-            System.out.println("Distinct count: " + entry.getValue());
+            LOG.info("Distinct ObjectNode: " + (String) entry.getKey());
+            LOG.info("Distinct count: " + entry.getValue());
             SchemaCount schemaCount = new SchemaCount();
             schemaCount.setSchema((String) entry.getKey());
             long thisCount = (Long) entry.getValue();
             schemaCount.setCount(thisCount);
             schemaCount.setPercent(calculatePercentage(thisCount, totalCount));
             schemaCountList.add(schemaCount);
-            float perc =
-                    i++;
+            i++;
         }
 
         return schemaCountList;

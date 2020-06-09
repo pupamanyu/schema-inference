@@ -30,7 +30,7 @@ public class SchemaCompareAsDS {
     public SchemaCompareAsDS() {
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void mainn(String[] args) throws IOException {
         SparkConf conf = (new SparkConf()).setAppName("Java UDF Example").setMaster("local[2]").set("spark.driver.host", "localhost");
         SparkSession spark = SparkSession.builder().config(conf).getOrCreate();
         readAndCompareDataFileAsJson(spark, inputFile2);
@@ -44,7 +44,7 @@ public class SchemaCompareAsDS {
         List<EventJsonSchema> eventsList = jsonEventsTuple._1() ;
         List<JSONObject> jsonObjList = jsonEventsTuple._2() ;
         System.out.println("JSON Events count: " + eventsList.size());
-        CompareSchemas.compareTwoSchemas(eventsList.get(0), eventsList.get(1)) ;
+        CompareSchemas.compareTwoSchemas(eventsList.get(0), eventsList.get(2)) ;
     }
 
     private static Tuple2<List<EventJsonSchema>, List<JSONObject>> getSchemaColumnDataset(SparkSession spark, Dataset<Row> ds) {

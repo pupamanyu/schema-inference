@@ -44,4 +44,11 @@ public class EventJsonSchema implements Serializable
         this.additionalProperties.put(name, value);
     }
 
+    @Override
+    public String toString() {
+        return "EventJsonSchema{" +
+                "type='" + type + '\'' +
+                ", additionalProperties=" + additionalProperties +
+                '}';
+    }
 }

@@ -5,6 +5,7 @@ import com.example.schemainfer.protogen.functions.ProcessStringColumn;
 import com.example.schemainfer.protogen.functions.ProcessStringColumnAsObjectNode;
 import com.example.schemainfer.protogen.functions.ProcessTextColumn;
 import com.example.schemainfer.protogen.functions.ProcessTextColumn2;
+import com.example.schemainfer.protogen.json.CompareSchemas;
 import com.example.schemainfer.protogen.json.EventJsonSchema;
 import com.example.schemainfer.protogen.utils.CommonUtils;
 import com.example.schemainfer.protogen.utils.Constants;
@@ -26,6 +27,7 @@ import scala.xml.Source;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -85,6 +87,7 @@ public class SeqFilesScan {
     }
 
     private static SparkConf getSparkConf(String mode) {
+        LOG.info("Mode = " + mode) ;
         SparkConf conf = new SparkConf()
                 .setAppName("Parse Seq UDF")
                 .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer") ;
@@ -173,7 +176,25 @@ public class SeqFilesScan {
         dataset.show(5);
         dataset.write().json(Constants.outputFile);
 
-        getSchemaColumnDataset(dataset) ;
+        List<EventJsonSchema> distinctSchemaList = getSchemaColumnDataset(dataset) ;
+        List<EventJsonSchema> mergedSchemaList = new ArrayList<>() ;
+        if (distinctSchemaList == null || distinctSchemaList.size()== 0) {
+            LOG.error("NO Distinct schemaLIST FOund. Please check.") ;
+            return ;
+        }
+        EventJsonSchema topSchema = distinctSchemaList.get(0) ;
+
+        for (int i=1; i< distinctSchemaList.size() ; i++) {
+            if (i > 10) {
+                break ;
+            }
+            final EventJsonSchema eventJsonSchema = CompareSchemas.compareTwoSchemas(topSchema, distinctSchemaList.get(i));
+            mergedSchemaList.add(eventJsonSchema) ;
+            LOG.info("Finished comparing schema: " + i) ;
+         //   Dataset<Row> mergedSchemaDataset = spark.read().option("inferSchema", true).json(eventJsonSchema.getAdditionalProperties().toString());
+         //   Dataset<Row> rowDataset = spark.read().option("inferSchema", true).json(dsjson);
+         //   mergedSchemaDataset.write().json(Constants.outputFile2+i);
+        }
     }
 
 
@@ -213,9 +234,10 @@ public class SeqFilesScan {
         });
     }
 
-    private static void getSchemaColumnDataset(Dataset<Row> ds) {
+    private static List<EventJsonSchema> getSchemaColumnDataset(Dataset<Row> ds) {
         Column schemaCol = ds.col("schema");
         final Dataset<String> schemadataset = ds.select("schema").as(Encoders.STRING());
+        List<EventJsonSchema> distinctSchemaList = new ArrayList<>() ;
 
         List<String> listOne = schemadataset.collectAsList();
 
@@ -223,19 +245,27 @@ public class SeqFilesScan {
         schemadataset.show();
 
         for (String ss : listOne) {
-            System.out.println("PP=" + ss);
-            parseJson(ss);
+            LOG.info("DISTINCT Schema= " + ss);
+            EventJsonSchema eventJsonSchema = parseJson(ss);
+            if (eventJsonSchema != null) {
+                distinctSchemaList.add(eventJsonSchema);
+            }
         }
+
+        return distinctSchemaList ;
     }
 
-    private static void parseJson(String jsonString)  {
+    private static EventJsonSchema parseJson(String jsonString)  {
         ObjectMapper mapper = new ObjectMapper();
         EventJsonSchema eventJsonSchema = null;
         try {
             eventJsonSchema = mapper.readValue(jsonString, EventJsonSchema.class);
-            System.out.println("JsonStructSchema Node: " + eventJsonSchema.getAdditionalProperties().toString());
+            LOG.info("JsonStructSchema ParsedNode: " + eventJsonSchema.getAdditionalProperties().toString());
+            return eventJsonSchema ;
         } catch (IOException e) {
+            LOG.error("Could not parse into EventJsonSchema: " + jsonString + " --> " + e.getMessage()) ;
             e.printStackTrace();
         }
+        return null ;
     }
 }

@@ -18,7 +18,7 @@ import org.spark_project.guava.collect.HashMultimap;
 import org.spark_project.guava.collect.Multimap;
 
 public class ProcessStringColumnAsObjectNode implements Function<String, ObjectNode>, Serializable {
-    static final Logger LOG = LoggerFactory.getLogger(ProcessStringColumnAsObjectNode.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProcessStringColumnAsObjectNode.class);
 
     public ProcessStringColumnAsObjectNode() {
     }
