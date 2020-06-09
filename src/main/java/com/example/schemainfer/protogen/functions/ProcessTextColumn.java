@@ -1,6 +1,7 @@
 package com.example.schemainfer.protogen.functions;
 
 import com.example.schemainfer.protogen.javaudf.Protomap;
+import com.example.schemainfer.protogen.rules.InferDatatype;
 import com.example.schemainfer.protogen.utils.*;
 import org.apache.hadoop.io.Text;
 
@@ -79,32 +80,29 @@ public class ProcessTextColumn implements FlatMapFunction<Text, Protomap>, Seria
     }
 
     public void formJsonFromRow(StringBuilder sb, String key, String value) {
-        if (key == null || key.isEmpty()) {
-            return;
-        }
-
-        sb.append("\"");
-        sb.append(key);
-        sb.append("\"");
-        sb.append(":");
-
-        if (value == null || value.isEmpty()) {
-            sb.append("null");
-            return;
-        } else {
-            if (CommonUtils.isPureAscii(value)) {
-                String v = value.replace("\u0000", "").replace("\n", "").replace("\r", "");
-                if (v.isEmpty()) {
-                    sb.append("null");
-                } else {
-                    if (JsonUtils.isJSONValid(v)) {
+        if (key != null && !key.isEmpty()) {
+            sb.append("\"");
+            sb.append(key);
+            sb.append("\"");
+            sb.append(":");
+            if (value != null && !value.isEmpty()) {
+                if (CommonUtils.isPureAscii(value)) {
+                    String v = value.replace("\u0000", "").replace("\n", "").replace("\r", "");
+                    if (v.isEmpty()) {
+                        sb.append("null");
+                    } else if (JsonUtils.isJSONValid(v)) {
                         sb.append(v);
+                    } else if (InferDatatype.determineInferDatatype(v) == Constants.DATATYPES.String.name()) {
+                        sb.append("\"");
+                        sb.append(v);
+                        sb.append("\"");
                     } else {
-                        sb.append("\"");
                         sb.append(v);
-                        sb.append("\"");
                     }
                 }
+
+            } else {
+                sb.append("null");
             }
         }
     }

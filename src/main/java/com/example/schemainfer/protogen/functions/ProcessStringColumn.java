@@ -15,7 +15,7 @@ import java.util.List;
 
 public class ProcessStringColumn implements FlatMapFunction<String, Protomap>, Serializable {
 
-   static final Logger LOG = LoggerFactory.getLogger(ProcessStringColumn.class) ;
+    static final Logger LOG = LoggerFactory.getLogger(ProcessStringColumn.class) ;
 
     @Override
     public Iterator<Protomap> call(String s) throws Exception {
@@ -40,7 +40,7 @@ public class ProcessStringColumn implements FlatMapFunction<String, Protomap>, S
         return protomapList.iterator();
     }
 
-    private static Multimap<String, String> splitFColumnIntoMap(String fvalue, List<Protomap> allProtomapList) {
+    public static Multimap<String, String> splitFColumnIntoMap(String fvalue, List<Protomap> allProtomapList) {
         LOG.info("fValue: " + fvalue);
         String[] keyvalues = fvalue.split(Constants.SEQUENCE_MAP_DELIM, -1);
         Multimap<String, String> allMap = HashMultimap.create();

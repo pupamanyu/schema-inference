@@ -1,4 +1,4 @@
-package com.example.schemainfer.protogen.json;
+package com.example.schemainfer.protogen.jsongen;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;

@@ -1,0 +1,767 @@
+{
+  "type": "struct",
+  "fields": [
+    {
+      "name": "app",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "assists",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "championTransformActor",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "championTransformType",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "dragonSoulGivenName",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "dragonSoulGivenTeamId",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "gameId",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "gameStatActor",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "gameStatName",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "gameStatTeam",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "gameStatValue",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "itemActor",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "itemId",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "killType",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "killer",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "properties",
+            "type": {
+              "type": "struct",
+              "fields": [
+                {
+                  "name": "championId",
+                  "type": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "name": "type",
+                        "type": "string",
+                        "nullable": true,
+                        "metadata": {}
+                      }
+                    ]
+                  },
+                  "nullable": true,
+                  "metadata": {}
+                },
+                {
+                  "name": "currentAccountId",
+                  "type": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "name": "type",
+                        "type": "string",
+                        "nullable": true,
+                        "metadata": {}
+                      }
+                    ]
+                  },
+                  "nullable": true,
+                  "metadata": {}
+                },
+                {
+                  "name": "originalAccountId",
+                  "type": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "name": "type",
+                        "type": "string",
+                        "nullable": true,
+                        "metadata": {}
+                      }
+                    ]
+                  },
+                  "nullable": true,
+                  "metadata": {}
+                },
+                {
+                  "name": "originalAccountPlatformId",
+                  "type": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "name": "type",
+                        "type": "string",
+                        "nullable": true,
+                        "metadata": {}
+                      }
+                    ]
+                  },
+                  "nullable": true,
+                  "metadata": {}
+                }
+              ]
+            },
+            "nullable": true,
+            "metadata": {}
+          },
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "killerTeamId",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "legsVersionId",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "level",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "levelUpActor",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "millisSinceGameStart",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "monsterSubtype",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "monsterVictim",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "pauseRealTimestamp",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "platformId",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "processedTimestamp",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "skillLevelUpActor",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "skillLevelUpSlot",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "skillLevelUpType",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "surrenderActor",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "surrenderAgainstVote",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "surrenderForVote",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "surrenderTeamId",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "surrenderType",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "turretPlateDestroyedActor",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "turretPlateDestroyedAssists",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "turretPlateDestroyedLaneType",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "turretPlateDestroyedTeamId",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "type",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "victim",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "wardActor",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "wardType",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "xPos",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    },
+    {
+      "name": "zPos",
+      "type": {
+        "type": "struct",
+        "fields": [
+          {
+            "name": "type",
+            "type": "string",
+            "nullable": true,
+            "metadata": {}
+          }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    }
+  ]
+}
