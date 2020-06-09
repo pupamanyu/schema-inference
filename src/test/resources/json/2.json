@@ -1,148 +1,56 @@
 {
   "type": "object",
   "properties": {
-    "championTransformType": {
-      "type": "null"
-    },
-    "pauseRealTimestamp": {
-      "type": "null"
-    },
-    "gameStatValue": {
-      "type": "null"
-    },
-    "gameStatName": {
-      "type": "null"
-    },
-    "levelUpActor": {
-      "type": "null"
-    },
-    "monsterVictim": {
-      "type": "null"
-    },
-    "surrenderType": {
-      "type": "null"
-    },
-    "type": {
-      "type": "string"
-    },
-    "processedTimestamp": {
-      "type": "integer"
-    },
-    "turretPlateDestroyedTeamId": {
-      "type": "null"
-    },
-    "level": {
-      "type": "null"
-    },
-    "skillLevelUpActor": {
-      "type": "null"
-    },
-    "skillLevelUpSlot": {
-      "type": "null"
-    },
-    "xPos": {
-      "type": "integer"
-    },
-    "legsVersionId": {
-      "type": "number"
-    },
-    "killType": {
-      "type": "string"
-    },
-    "championTransformActor": {
-      "type": "null"
-    },
-    "killerTeamId": {
-      "type": "null"
-    },
-    "turretPlateDestroyedAssists": {
-      "type": "null"
-    },
-    "app": {
-      "type": "string"
-    },
-    "assists": {
-      "type": "array"
-    },
-    "turretPlateDestroyedActor": {
-      "type": "null"
-    },
-    "wardActor": {
-      "type": "null"
-    },
-    "victim": {
-      "type": "null"
-    },
-    "zPos": {
-      "type": "integer"
-    },
-    "surrenderTeamId": {
-      "type": "null"
-    },
-    "gameId": {
-      "type": "integer"
-    },
-    "monsterSubtype": {
-      "type": "null"
-    },
-    "itemId": {
-      "type": "null"
-    },
-    "gameStatTeam": {
-      "type": "null"
-    },
-    "platformId": {
-      "type": "string"
-    },
-    "wardType": {
-      "type": "null"
-    },
-    "itemActor": {
-      "type": "null"
-    },
-    "surrenderActor": {
-      "type": "null"
-    },
-    "turretPlateDestroyedLaneType": {
-      "type": "null"
-    },
-    "skillLevelUpType": {
-      "type": "null"
-    },
-    "dragonSoulGivenTeamId": {
-      "type": "null"
-    },
-    "dragonSoulGivenName": {
-      "type": "null"
-    },
-    "gameStatActor": {
-      "type": "null"
-    },
-    "millisSinceGameStart": {
-      "type": "integer"
-    },
-    "surrenderAgainstVote": {
-      "type": "null"
-    },
+    "championTransformType": {"type": "null"},
+    "pauseRealTimestamp": {"type": "null"},
+    "gameStatValue": {"type": "null"},
+    "gameStatName": {"type": "null"},
+    "levelUpActor": {"type": "null"},
+    "monsterVictim": {"type": "null"},
+    "surrenderType": {"type": "null"},
+    "type": {"type": "string"},
+    "processedTimestamp": {"type": "integer"},
+    "turretPlateDestroyedTeamId": {"type": "null"},
+    "level": {"type": "null"},
+    "skillLevelUpActor": {"type": "null"},
+    "skillLevelUpSlot": {"type": "null"},
+    "xPos": {"type": "integer"},
+    "legsVersionId": {"type": "number"},
+    "killType": {"type": "string"},
+    "championTransformActor": {"type": "null"},
+    "killerTeamId": {"type": "null"},
+    "turretPlateDestroyedAssists": {"type": "null"},
+    "app": {"type": "string"},
+    "assists": {"type": "array"},
+    "turretPlateDestroyedActor": {"type": "null"},
+    "wardActor": {"type": "null"},
+    "victim": {"type": "null"},
+    "zPos": {"type": "integer"},
+    "surrenderTeamId": {"type": "null"},
+    "gameId": {"type": "integer"},
+    "monsterSubtype": {"type": "null"},
+    "itemId": {"type": "null"},
+    "gameStatTeam": {"type": "null"},
+    "platformId": {"type": "string"},
+    "wardType": {"type": "null"},
+    "itemActor": {"type": "null"},
+    "surrenderActor": {"type": "null"},
+    "turretPlateDestroyedLaneType": {"type": "null"},
+    "skillLevelUpType": {"type": "null"},
+    "dragonSoulGivenTeamId": {"type": "null"},
+    "dragonSoulGivenName": {"type": "null"},
+    "gameStatActor": {"type": "null"},
+    "millisSinceGameStart": {"type": "integer"},
+    "surrenderAgainstVote": {"type": "null"},
     "killer": {
       "type": "object",
       "properties": {
-        "currentAccountId": {
-          "type": "integer"
-        },
-        "originalAccountPlatformId": {
-          "type": "string"
-        },
-        "originalAccountId": {
-          "type": "integer"
-        },
-        "championId": {
-          "type": "integer"
-        }
+        "currentAccountId": {"type": "integer"},
+        "originalAccountPlatformId": {"type": "string"},
+        "originalAccountId": {"type": "integer"},
+        "championId": {"type": "integer"}
       }
     },
-    "surrenderForVote": {
-      "type": "null"
-    }
+    "surrenderForVote": {"type": "null"}
   }
 }
