@@ -1,16 +1,11 @@
 package com.example.schemainfer.protogen.javaudf;
 
-import com.example.schemainfer.protogen.functions.ProcessStringColumn;
-import com.example.schemainfer.protogen.utils.Constants;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.spark_project.guava.collect.Multimap;
 import scala.xml.Source;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -42,21 +37,5 @@ class SchemaCompareTest {
         inputstream.close();
         return schema ;
     }
-
-/*    private static ObjectNode parseRow(String s) {
-        List<Protomap> protomapList = new ArrayList<>();
-        String[] ss = s.split(Constants.SEQUENCE_FIELD_DELIMITER, -1);
-
-        if (ss.length != 3) {
-            System.err.println("Number of columns != 3. Skipping row") ;
-            return null ;
-        }
-        String fvalue = ss[2];
-        if (fvalue == null || fvalue.isEmpty()) {
-            System.err.println("Col #3 is empty. Skipping") ;
-            return null;
-        }
-        return ProcessStringColumn.splitFColumnIntoMap(fvalue, protomapList);
-    }*/
 
 }

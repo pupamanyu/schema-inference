@@ -1,7 +1,6 @@
 package com.example.schemainfer.protogen.javaudf;
 
-import com.example.schemainfer.protogen.functions.ProcessStringColumn;
-import com.example.schemainfer.protogen.functions.ProcessStringColumnAsObjectNode;
+import com.example.schemainfer.protogen.functions.ProcessColumn;
 import com.example.schemainfer.protogen.utils.Constants;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import scala.xml.Source;
@@ -56,7 +55,8 @@ class SchemaCompare2Test {
             System.err.println("Col #3 is empty. Skipping") ;
             return null;
         }
-        return ProcessStringColumnAsObjectNode.splitFColumnIntoMap(fvalue, protomapList);
+        ProcessColumn pc = new ProcessColumn(fvalue, protomapList) ;
+        return pc.splitFColumnIntoMap();
     }
 
 }

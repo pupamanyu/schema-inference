@@ -63,9 +63,7 @@ public class JsonUtils {
                     JSONObject jsonObj = (JSONObject) oo;
                     derivedMap = processJson(jsonObj, protomapList);
                 } else {
-                    System.out.println("oo not instance of jjSonObj: " + oo.toString());
-                    System.out.println("jjSonObj from Value: " + ((JSONArray) jSonObject).toString());
-                    LOG.error("oo not instance of jjSonObj: {}", oo.toString());
+                     LOG.error("oo not instance of jjSonObj: {}", oo.toString());
                     LOG.error("jjSonObj from Value: {}", jSonObject.toString());
                     break;
                 }
@@ -82,7 +80,10 @@ public class JsonUtils {
         Multimap<String, String> entityMap = HashMultimap.create();
         for (String k : keyset) {
             // String datatype = InferDatatype.determineInferDatatype(jsonObj.getString(k)) ;
-            entityMap.put(k, jsonObj.getString(k));
+            final String jsonObjString = jsonObj.getString(k);
+            if (jsonObjString != null && !jsonObjString.isEmpty() && !jsonObjString.equalsIgnoreCase("null")) {
+                entityMap.put(k, jsonObj.getString(k));
+            }
 
             // Uncomment : Recursion: if there are more than 2 levels deep of map found. Not tested yet
             // checkAndProcessIfJson(k, jsonObj.getString(k), entityMap, protomapList) ;
@@ -90,10 +91,15 @@ public class JsonUtils {
         return entityMap;
     }
 
-    public static void checkAndProcessIfJson(String key, String value, Multimap<String, String> allMap, List<Protomap> protomapList) {
-        if (value == null || value.isEmpty()) {
-            allMainKeyValue(key, value, allMap, protomapList);
-            return;
+    public static boolean checkAndProcessIfJson(String key, String value, Multimap<String, String> allMap, List<Protomap> protomapList) {
+        if (value == null) {
+         ///   allMainKeyValue(key, value, allMap, protomapList);
+            return false;
+        } else {
+            String v = value.trim() ;
+            if (v.isEmpty()  || v.equalsIgnoreCase("null")) {
+                return false ;
+            }
         }
         boolean isValidJson = JsonUtils.isJSONValid(value);
         if (isValidJson) {
@@ -110,6 +116,7 @@ public class JsonUtils {
         } else {
             allMainKeyValue(key, value, allMap, protomapList);
         }
+        return true ;
     }
 
     public static void allMainKeyValue(String key, String value, Multimap<String, String> allMap, List<Protomap> protomapList) {

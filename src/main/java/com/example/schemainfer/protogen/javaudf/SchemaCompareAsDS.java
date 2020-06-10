@@ -58,7 +58,7 @@ public class SchemaCompareAsDS {
         schemadataset.show();
 
         for (String ss : listOne) {
-            System.out.println("PP=" + ss);
+            System.out.println("Input DS= " + ss);
             EventJsonSchema eventJsonSchema = parseJson(ss);
             eventList.add(eventJsonSchema);
 

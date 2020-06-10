@@ -1,9 +1,7 @@
 package com.example.schemainfer.protogen.javaudf;
 
 import com.example.schemainfer.protogen.domain.SchemaCount;
-import com.example.schemainfer.protogen.functions.ProcessStringColumn;
 import com.example.schemainfer.protogen.functions.ProcessStringColumnAsObjectNode;
-import com.example.schemainfer.protogen.functions.ProcessTextColumn;
 import com.example.schemainfer.protogen.functions.ProcessTextColumn2;
 import com.example.schemainfer.protogen.json.CompareSchemas;
 import com.example.schemainfer.protogen.json.EventJsonSchema;
@@ -22,11 +20,8 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.DataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.xml.Source;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -113,30 +108,14 @@ public class SeqFilesScan {
         return mode;
     }
 
-    private static String getSchemaFromFile() throws IOException {
-        URL schemaURL = ClassLoader.getSystemResource("schema.json");
-        InputStream inputstream = Source.fromFile(schemaURL.getFile()).getByteStream();
-        byte[] data = new byte[2048];
-        int bytesRead = inputstream.read(data);
-
-        StringBuffer schemaBuff;
-        for(schemaBuff = new StringBuffer(); bytesRead != -1; bytesRead = inputstream.read(data)) {
-            String s = new String(data);
-            schemaBuff.append(s);
-        }
-
-        inputstream.close();
-        return schemaBuff.toString();
-    }
-
     private static void readValuesAsString(SparkSession spark, JavaSparkContext jsc) {
         JavaRDD<String> values = jsc.textFile(Constants.inputFile);
         LOG.info("Values: " + values.toDebugString());
         JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap2O(values);
         long totalCount = parsedRDD.count();
-        System.out.println("Parsed RDD totalCount: " + totalCount);
+        LOG.info("Parsed RDD totalCount: " + totalCount);
         JavaRDD<ObjectNode> distinctObjectNodeRDD = parsedRDD.distinct();
-        System.out.println("Distinct RDD totalCount: " + distinctObjectNodeRDD.count());
+        LOG.info("Distinct RDD totalCount: " + distinctObjectNodeRDD.count());
         Map<String, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
             return v1.toString();
         }).countByValue();
@@ -209,21 +188,8 @@ public class SeqFilesScan {
         spark.sql("SELECT JSCHEMA(schema) AS jsonschema FROM gameevent").show();
     }
 
-
-    private static JavaRDD<Protomap> transformFValueIntoProromap3(JavaRDD<Text> values) {
-        return values.flatMap(new ProcessTextColumn()).filter((v1) -> {
-            return v1 != null;
-        });
-    }
-
     private static JavaRDD<ObjectNode> transformFValueIntoProromap31(JavaRDD<Text> values) {
         return values.map(new ProcessTextColumn2()).filter((v1) -> {
-            return v1 != null;
-        });
-    }
-
-    private static JavaRDD<Protomap> transformFValueIntoProromap2S(JavaRDD<String> values) {
-        return values.flatMap(new ProcessStringColumn()).filter((v1) -> {
             return v1 != null;
         });
     }
