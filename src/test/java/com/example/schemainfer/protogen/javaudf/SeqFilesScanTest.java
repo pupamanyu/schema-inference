@@ -1,6 +1,6 @@
 package com.example.schemainfer.protogen.javaudf;
 
-import com.example.schemainfer.protogen.functions.ProcessStringColumn;
+import com.example.schemainfer.protogen.functions.ProcessStringColumnAsObjectNode;
 import scala.xml.Source;
 
 import java.io.IOException;
@@ -19,7 +19,9 @@ class SeqFilesScanTest {
         while (bytesRead != -1) {
             String s = new String(data);
             System.out.println("row = " + s) ;
-            ProcessStringColumn.processRow(s) ;
+          //  ProcessStringColumn.processRow(s) ;
+            ProcessStringColumnAsObjectNode node = new ProcessStringColumnAsObjectNode() ;
+            node.processRow(s) ;
             bytesRead = inputstream.read(data);
         }
         inputstream.close();

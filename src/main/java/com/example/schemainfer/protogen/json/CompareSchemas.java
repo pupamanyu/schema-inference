@@ -33,7 +33,7 @@ public class CompareSchemas {
         mergedJsonSchema.setType(firstSchema.getType());
         final Object mergedProperties = mergedMap.get("properties");
         mergedJsonSchema.setAdditionalProperty("properties", mergedProperties);
-        LOG.info("-----------------------------------------------------------") ;
+        LOG.info("---------------------------------------------------------------------") ;
         LOG.info("FINAL MERGED EventJsonSchema SCHEMA: " + mergedJsonSchema.toString())         ;
         return mergedJsonSchema ;
 

@@ -9,9 +9,7 @@ public class Constants {
 
     // Path to output files. Hard coded for now...
     public static String outputFile = "gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out3";
-    public static String outputFile2 = "gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out3";
-  //  public static String outputFile = "/Users/rajnish.malik/temp/rt/f.out";
-  //  public static String outputFile2 = "/Users/rajnish.malik/temp/rt/f2.out";
+  //  public static String outputFile = "/Users/rajnish.malik/temp/rt/f2.out";
 
     // View name used in SQL
     public static String registeredViewName = "gameevent";

@@ -32,7 +32,7 @@ public class CommonUtils {
         StringBuilder sb = new StringBuilder();
         someMap.entrySet().stream()
                 .forEach(e -> {
-                    System.out.print(referenceText + "\t\t Keyy: " + e.getKey() + " having Value: " + e.getValue() + "\n");
+                    LOG.info(referenceText + "\t\t Keyy: " + e.getKey() + " having Value: " + e.getValue() + "\n");
                 });
     }
 

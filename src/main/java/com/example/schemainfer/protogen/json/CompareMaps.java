@@ -36,6 +36,7 @@ public class CompareMaps {
         boolean issame = true ;
         this.keyHierarchy = keyHierarchy ;
         LOG.info(CommonUtils.printTabs(this.depthLevel) + " Starting compareUsingGauva :" + mainKeyName) ;
+        compareAndAddKeys(this.mergedFinalMap, this.second) ;
         MapDifference<String, Object> diff = Maps.difference(first, second);
         keyHierarchy.add(mainKeyName) ;
 
@@ -63,6 +64,29 @@ public class CompareMaps {
         return mergedFinalMap;
     }
 
+    private void compareAndAddKeys(Map<String, Object> addTo, Map<String, Object> addFrom) {
+        addFrom.keySet().stream().forEach(k -> {
+            if (!addTo.containsKey(k)) {
+                addTo.put(k, addFrom.get(k)) ;
+            }
+        }); ;
+    }
+
+    private void forcePushKeys(Map<String, Object> addTo, Map<String, Object> addFrom, String argKey) {
+        if (addTo.containsKey(argKey)) {
+            Object value = addTo.get(argKey) ;
+            if (value instanceof Map) {
+                Map<String, Object> propertiesMap = (Map<String, Object>) value;
+                addFrom.keySet().stream().forEach(k -> {
+                    if (propertiesMap.containsKey(k)) {
+                        propertiesMap.remove(k) ;
+                    }
+                    propertiesMap.put(k, addFrom.get(k));
+                });
+            }
+        }
+    }
+
     private Map<String, Object> compareMapsDifferences(Object left, Object right, int i, String mainKey) {
 
         Map<String, Object> mergedDiffMap = (Map) left ;
@@ -88,17 +112,16 @@ public class CompareMaps {
                                 } else {
                                     // Recursion
                                     CompareMaps compareMaps = new CompareMaps(diff2.entriesOnlyOnLeft(), diff2.entriesOnlyOnRight(), this.depthLevel + 1);
-                                    compareMaps.compareUsingGauva(key, keyHierarchy);
+                                    final Map<String, Object> nestedObjectMap = compareMaps.compareUsingGauva(key, keyHierarchy);
+                                    LOG.info("Nested Map merged: " + nestedObjectMap.toString()) ;
+                                    forcePushKeys(this.mergedFinalMap, nestedObjectMap, key);
                                 }
                             } else {
                                 LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " KEY: " + mainKey + " \t--> " + key + "\tDIFF-LEFT  = " + valueDiff.leftValue());
                                 LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " KEY: " + mainKey + " \t--> " + key + "\tDIFF-RIGHT = " + valueDiff.rightValue());
                                 LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " Key Hierarchy of this instance: " + keyHierarchy);
-                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " ENTRYYY : " + entry.getClass() + " " + entry.toString());
-
                                 LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " mergedDiffMap BEFORE : " +  mergedDiffMap.toString());
                                 final Object mergedfinal = mergedDiffMap.merge(key, ((Map) right).get(key), new MergeBiFunction() ) ;
-                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " mergedfinal  : " +  mergedfinal.toString());
                                 LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " mergedDiffMap AFTER : " +  mergedDiffMap.toString());
                             }
                         });
@@ -118,7 +141,6 @@ public class CompareMaps {
 
             entriesToAddIn.putAll(missingEntriesMap);
         }
-
     }
 
 }
