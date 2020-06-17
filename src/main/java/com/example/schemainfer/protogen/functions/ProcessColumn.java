@@ -17,8 +17,8 @@ import java.util.List;
 public class ProcessColumn {
     static final Logger LOG = LoggerFactory.getLogger(ProcessColumn.class);
 
-    private String colValue ;
-    private List<Protomap> allProtomapList ;
+    private String colValue;
+    private List<Protomap> allProtomapList;
 
     public ProcessColumn(String colValue, List<Protomap> allProtomapList) {
         this.colValue = colValue;
@@ -30,7 +30,7 @@ public class ProcessColumn {
         String[] keyvalues = this.colValue.split(Constants.SEQUENCE_MAP_DELIM, -1);
         Multimap<String, String> allMap = HashMultimap.create();
         StringBuilder jsonBuffer = new StringBuilder("{");
-        int j=0 ;
+        int j = 0;
 
         for (int i = 0; i < keyvalues.length; ++i) {
             String s = keyvalues[i];
@@ -45,7 +45,7 @@ public class ProcessColumn {
                         jsonBuffer.append(",");
                     }
                     formJsonFromRow(jsonBuffer, key, value);
-                    j++ ;
+                    j++;
                 }
             }
         }
@@ -59,38 +59,34 @@ public class ProcessColumn {
     }
 
     private void formJsonFromRow(StringBuilder sb, String key, String value) {
-        if (value == null) {
+        if (value == null || value.isEmpty()) {
             return;
-        } else {
-            String v = value.trim() ;
-            if (v.isEmpty()  || v.equalsIgnoreCase("null")) {
-                return ;
-            }
         }
 
-        if (key != null && !key.isEmpty()) {
+        if (key == null || key.isEmpty()) {
+            return;
+        }
+
+        String v = value.trim().replace("\u0000", "").replace("\n", "").replace("\r", "");
+        if (v == null || v.isEmpty() || v.equalsIgnoreCase("null")) {
+            return;
+        }
+
+        if (CommonUtils.isPureAscii(v)) {
             sb.append("\"");
             sb.append(key);
             sb.append("\"");
             sb.append(":");
-            if (value != null && !value.isEmpty()) {
-                if (CommonUtils.isPureAscii(value)) {
-                    String v = value.replace("\u0000", "").replace("\n", "").replace("\r", "");
-                    if (v.isEmpty()) {
-                        sb.append("null");
-                    } else if (JsonUtils.isJSONValid(v)) {
-                        sb.append(v);
-                    } else if (InferDatatype.determineInferDatatype(v) == Constants.DATATYPES.String.name()) {
-                        sb.append("\"");
-                        sb.append(v);
-                        sb.append("\"");
-                    } else {
-                        sb.append(v);
-                    }
-                }
+            if (JsonUtils.isJSONValid(v)) {
+                sb.append(v);
+            } else if (InferDatatype.determineInferDatatype(v) == Constants.DATATYPES.String.name()) {
+                sb.append("\"");
+                sb.append(v);
+                sb.append("\"");
             } else {
-                sb.append("null");
+                sb.append(v);
             }
         }
+
     }
 }

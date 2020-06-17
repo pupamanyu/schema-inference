@@ -27,22 +27,22 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The Main class.
+ * The Main class .
  *
  * Objective:
- * Given input in a sequential file
+ * Given input data in a sequence file
  * Derive a superset protobuf schema from nested key value pairs
  *
  * This will be achieved in following steps:
- * Stage 0 - Input Data	8
- * Stage 1- Convert from Sequential format
- * Stage 3 - Column split
+ * Stage 0 - Input Data in Sequence files in GCS
+ * Stage 1-  Convert from Sequential format
+ * Stage 3 - Column split into key-value pairs
  * Stage 4 - Convert key value pairs into Json
- * Stage 5 - Infer data types and generate Json schema
+ * Stage 5 - Generate Json schema with json datatypes
  * Stage 6 - Repeat for all rows/files
  * Stage 7 - Gather distinct schemas and its count
- * Stage 8 - Sort the dataset in descending order of count
- * Stage 9 - Parse json into Java Object
+ * Stage 8 - Sort the Spark dataset in descending order of count
+ * Stage 9 - Parse json from 'schema' column into Java Object
  * Stage 10 - Compare with other json schema objects
  * Stage 11 - Find superset
  * Stage 12 - Persist
@@ -120,7 +120,9 @@ public class SeqFilesScan {
             return v1.toString();
         }).countByValue();
         List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount(objectNodeLongMap, totalCount);
-        convertSchemaCountRDDtoDataset(spark, schemaCountList);
+        EventJsonSchema mergedTopSchema = convertSchemaCountRDDtoDataset(spark, schemaCountList);
+        ConvertToProtobufSchema newSchemaGen = new ConvertToProtobufSchema(mergedTopSchema) ;
+        newSchemaGen.generate();
     }
 
     private static void readValuesAsText(SparkSession spark, JavaSparkContext jsc) {
@@ -148,32 +150,37 @@ public class SeqFilesScan {
         dataset.show(5);
     }
 
-    private static void convertSchemaCountRDDtoDataset(SparkSession spark, List<SchemaCount> schemaCountList) {
+    private static EventJsonSchema convertSchemaCountRDDtoDataset(SparkSession spark, List<SchemaCount> schemaCountList) {
         Dataset<Row> dataset = spark.createDataFrame(schemaCountList, SchemaCount.class);
         dataset.createOrReplaceTempView(Constants.registeredViewName);
         dataset.printSchema();
-        dataset.show(5);
-        dataset.write().json(Constants.outputFile);
+       //////// dataset.show(5);
+       //////// dataset.write().json(Constants.outputFile);
 
         List<EventJsonSchema> distinctSchemaList = getSchemaColumnDataset(dataset) ;
         List<EventJsonSchema> mergedSchemaList = new ArrayList<>() ;
         if (distinctSchemaList == null || distinctSchemaList.size()== 0) {
             LOG.error("NO Distinct schemaLIST FOund. Please check.") ;
-            return ;
+            return null ;
         }
         EventJsonSchema topSchema = distinctSchemaList.get(0) ;
+        EventJsonSchema mergedTopSchema = topSchema ;
 
         for (int i=1; i< distinctSchemaList.size() ; i++) {
             if (i > 10) {
                 break ;
             }
-            final EventJsonSchema eventJsonSchema = CompareSchemas.compareTwoSchemas(topSchema, distinctSchemaList.get(i));
-            mergedSchemaList.add(eventJsonSchema) ;
-            LOG.info("Finished comparing schema: " + i) ;
+            final EventJsonSchema comparedJsonSchema = CompareSchemas.compareTwoSchemas(mergedTopSchema, distinctSchemaList.get(i));
+            if (comparedJsonSchema != null) {
+                mergedTopSchema = comparedJsonSchema ;
+            }
+             LOG.info("Finished comparing schema: " + i) ;
          //   Dataset<Row> mergedSchemaDataset = spark.read().option("inferSchema", true).json(eventJsonSchema.getAdditionalProperties().toString());
          //   Dataset<Row> rowDataset = spark.read().option("inferSchema", true).json(dsjson);
          //   mergedSchemaDataset.write().json(Constants.outputFile2+i);
         }
+
+        return mergedTopSchema ;
     }
 
 
