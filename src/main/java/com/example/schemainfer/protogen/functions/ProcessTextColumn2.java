@@ -39,7 +39,6 @@ public class ProcessTextColumn2 implements Function<Text, ObjectNode>, Serializa
         } else {
             String fvalue = ss[2];
             if (fvalue != null && !fvalue.isEmpty()) {
-                //ObjectNode schema = splitFColumnIntoMap(fvalue, protomapList);
                 ProcessColumn pc = new ProcessColumn(s, protomapList) ;
                 ObjectNode schema = pc.splitFColumnIntoMap() ;
                 LOG.info("-----------------------------------------------------------");
@@ -47,76 +46,6 @@ public class ProcessTextColumn2 implements Function<Text, ObjectNode>, Serializa
             } else {
                 LOG.error("Col #3 is empty. Skipping");
                 return null;
-            }
-        }
-    }
-
-    private ObjectNode splitFColumnIntoMapppp(String fvalue, List<Protomap> allProtomapList) {
-        LOG.info("fValue: " + fvalue);
-        String[] keyvalues = fvalue.split(Constants.SEQUENCE_MAP_DELIM, -1);
-        Multimap<String, String> allMap = HashMultimap.create();
-        StringBuilder jsonBuffer = new StringBuilder("{");
-        int j=0 ;
-
-        for (int i = 0; i < keyvalues.length; ++i) {
-            String s = keyvalues[i];
-            String[] keyvalue = s.split(Constants.SEQUENCE_MAP_EQUAL, 2);
-            if (keyvalue.length == 2) {
-                String key = keyvalue[0];
-                String value = keyvalue[1];
-
-                boolean isadded = JsonUtils.checkAndProcessIfJson(key, value, allMap, allProtomapList);
-                if (isadded) {
-                    if (j > 0) {
-                        jsonBuffer.append(",");
-                    }
-                    formJsonFromRowwwww(jsonBuffer, key, value);
-                    j++ ;
-                }
-            }
-        }
-
-        jsonBuffer.append("}");
-        String finalJsonRow = jsonBuffer.toString();
-        LOG.info("Final JSON String: " + finalJsonRow);
-        boolean isValidJson = JsonUtils.isJSONValid(finalJsonRow);
-        LOG.info("isValidJson: " + isValidJson);
-        return JsonGenUtils.generateSchemaFromJsonString(finalJsonRow);
-    }
-
-    public void formJsonFromRowwwww(StringBuilder sb, String key, String value) {
-        if (value == null) {
-            return;
-        } else {
-            String v = value.trim() ;
-            if (v.isEmpty()  || v.equalsIgnoreCase("null")) {
-                return ;
-            }
-        }
-
-        if (key != null && !key.isEmpty()) {
-            sb.append("\"");
-            sb.append(key);
-            sb.append("\"");
-            sb.append(":");
-            if (value != null && !value.isEmpty()) {
-                if (CommonUtils.isPureAscii(value)) {
-                    String v = value.replace("\u0000", "").replace("\n", "").replace("\r", "");
-                    if (v.isEmpty()) {
-                        sb.append("null");
-                    } else if (JsonUtils.isJSONValid(v)) {
-                        sb.append(v);
-                    } else if (InferDatatype.determineInferDatatype(v) == DATATYPES.String.name()) {
-                        sb.append("\"");
-                        sb.append(v);
-                        sb.append("\"");
-                    } else {
-                        sb.append(v);
-                    }
-                }
-
-            } else {
-                sb.append("null");
             }
         }
     }

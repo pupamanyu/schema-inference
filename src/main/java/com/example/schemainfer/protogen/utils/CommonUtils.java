@@ -194,4 +194,12 @@ public class CommonUtils {
         return l;
     }
 
+    public static <K, V extends Comparable<V>> V findMaxValue(Map<K, V> map) {
+        Optional<Entry<K, V>> maxEntry = map.entrySet()
+                .stream()
+                .max(Comparator.comparing(Map.Entry::getValue));
+        return maxEntry.get()
+                .getValue();
+    }
+
 }

@@ -17,9 +17,9 @@ public class CompareMaps {
     private static final Logger LOG = LoggerFactory.getLogger(CompareMaps.class);
 
     List<Map<String, Object>> missingObjectsList = new ArrayList<>();
-    List<String> keyHierarchy = new ArrayList<>() ;
-    Map<String, Object> first ;
-    Map<String, Object> second ;
+    List<String> keyHierarchy = new ArrayList<>();
+    Map<String, Object> first;
+    Map<String, Object> second;
     int depthLevel;
     Map<String, Object> mergedFinalMap;
 
@@ -27,36 +27,33 @@ public class CompareMaps {
         this.first = leftObject;
         this.second = rightObject;
         this.depthLevel = depthLevel;
-        mergedFinalMap = new HashMap<>(first) ;
+        mergedFinalMap = new HashMap<>(first);
         LOG.info(CommonUtils.printTabs(this.depthLevel) + " ENTRY: entries on Right :" + rightObject.size());
         LOG.info(CommonUtils.printTabs(this.depthLevel) + " ENTRY: entries on Left :" + leftObject.size());
     }
 
     public Map<String, Object> compareUsingGauva(String mainKeyName, List<String> keyHierarchy) {
-        boolean issame = true ;
-        this.keyHierarchy = keyHierarchy ;
-        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Starting compareUsingGauva :" + mainKeyName) ;
-        compareAndAddKeys(this.mergedFinalMap, this.second) ;
-        MapDifference<String, Object> diff = Maps.difference(first, second);
-        keyHierarchy.add(mainKeyName) ;
+        boolean issame = true;
+        this.keyHierarchy = keyHierarchy;
+        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Starting compareUsingGauva :" + mainKeyName);
+        compareAndAddKeys(this.mergedFinalMap, this.second);
+        MapDifference<String, Object> diff = Maps.difference(this.mergedFinalMap, second);
+        keyHierarchy.add(mainKeyName);
 
-        if (diff.entriesOnlyOnRight().size() != diff.entriesOnlyOnLeft().size()) {
-            issame = false ;
-            LOG.info(CommonUtils.printTabs(this.depthLevel) + " ----------------------------------------------------------");
-            LOG.info(CommonUtils.printTabs(this.depthLevel) + " Different # of entries: " + diff.entriesDiffering().size());
-            LOG.info(CommonUtils.printTabs(this.depthLevel) + " Missing entries on Right :" + diff.entriesOnlyOnRight().size());
-            LOG.info(CommonUtils.printTabs(this.depthLevel) + " Missing entries on Left  :" + diff.entriesOnlyOnLeft().size());
-            Map<String, Object> entriesOnlyOnRight = diff.entriesOnlyOnRight();
-            Map<String, Object> entriesOnlyOnLeft = diff.entriesOnlyOnLeft();
-            Map<String, Object> entriesInCommon = diff.entriesInCommon();
-            LOG.info(CommonUtils.printTabs(this.depthLevel) + " Mismatch in number of entries: " + entriesOnlyOnRight.size() + " :: " + entriesOnlyOnLeft.size());
-            addMissingEntry(entriesOnlyOnLeft, this.depthLevel, mergedFinalMap);
-            addMissingEntry(entriesOnlyOnRight, this.depthLevel, mergedFinalMap);
-        }
+        LOG.info(CommonUtils.printTabs(this.depthLevel) + " ----------------------------------------------------------");
+        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Different # of entries: " + diff.entriesDiffering().size());
+        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Missing entries on Right :" + diff.entriesOnlyOnRight().size());
+        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Missing entries on Left  :" + diff.entriesOnlyOnLeft().size());
+        Map<String, Object> entriesOnlyOnRight = diff.entriesOnlyOnRight();
+        Map<String, Object> entriesOnlyOnLeft = diff.entriesOnlyOnLeft();
+        Map<String, Object> entriesInCommon = diff.entriesInCommon();
+        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Mismatch in number of entries: " + entriesOnlyOnRight.size() + " :: " + entriesOnlyOnLeft.size());
+        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Key Hierarchy of this Missing instance: " + keyHierarchy);
+        addMissingEntry(entriesOnlyOnLeft, this.depthLevel, mergedFinalMap);
+        addMissingEntry(entriesOnlyOnRight, this.depthLevel, mergedFinalMap);
 
         if (diff.entriesDiffering() != null && diff.entriesDiffering().size() > 0) {
-            issame = false ;
-            mergedFinalMap = compareMapsDifferences(first, second, this.depthLevel + 1, mainKeyName) ;
+            mergedFinalMap = compareMapsDifferences(first, second, this.depthLevel + 1, mainKeyName);
         }
 
         LOG.info(CommonUtils.printTabs(this.depthLevel) + " EXIT: Merged Total Entries ON EXIT:" + mergedFinalMap.size());
@@ -67,19 +64,21 @@ public class CompareMaps {
     private void compareAndAddKeys(Map<String, Object> addTo, Map<String, Object> addFrom) {
         addFrom.keySet().stream().forEach(k -> {
             if (!addTo.containsKey(k)) {
-                addTo.put(k, addFrom.get(k)) ;
+                addTo.put(k, addFrom.get(k));
+                LOG.info(CommonUtils.printTabs(this.depthLevel) + " New Key added : " + k + "  :\t" + addFrom.get(k) + "  :\t" + addFrom.get(k).getClass());
             }
-        }); ;
+        });
+        ;
     }
 
     private void forcePushKeys(Map<String, Object> addTo, Map<String, Object> addFrom, String argKey) {
         if (addTo.containsKey(argKey)) {
-            Object value = addTo.get(argKey) ;
+            Object value = addTo.get(argKey);
             if (value instanceof Map) {
                 Map<String, Object> propertiesMap = (Map<String, Object>) value;
                 addFrom.keySet().stream().forEach(k -> {
                     if (propertiesMap.containsKey(k)) {
-                        propertiesMap.remove(k) ;
+                        propertiesMap.remove(k);
                     }
                     propertiesMap.put(k, addFrom.get(k));
                 });
@@ -89,9 +88,11 @@ public class CompareMaps {
 
     private Map<String, Object> compareMapsDifferences(Object left, Object right, int i, String mainKey) {
 
-        Map<String, Object> mergedDiffMap = (Map) left ;
+        Map<String, Object> mergedDiffMap = (Map) left;
+        List<String> localKeyHierarchy = new ArrayList<>(keyHierarchy);
 
         if (left instanceof Map && right instanceof Map) {
+            compareAndAddKeys(mergedDiffMap, (Map<String, Object>) right);
 
             final MapDifference difference = Maps.difference((Map) left, (Map) right);
             if (difference != null && difference.entriesDiffering() != null) {
@@ -113,16 +114,16 @@ public class CompareMaps {
                                     // Recursion
                                     CompareMaps compareMaps = new CompareMaps(diff2.entriesOnlyOnLeft(), diff2.entriesOnlyOnRight(), this.depthLevel + 1);
                                     final Map<String, Object> nestedObjectMap = compareMaps.compareUsingGauva(key, keyHierarchy);
-                                    LOG.info("Nested Map merged: " + nestedObjectMap.toString()) ;
+                                    LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " Nested Map merged: " + nestedObjectMap.toString());
                                     forcePushKeys(this.mergedFinalMap, nestedObjectMap, key);
                                 }
                             } else {
                                 LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " KEY: " + mainKey + " \t--> " + key + "\tDIFF-LEFT  = " + valueDiff.leftValue());
                                 LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " KEY: " + mainKey + " \t--> " + key + "\tDIFF-RIGHT = " + valueDiff.rightValue());
                                 LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " Key Hierarchy of this instance: " + keyHierarchy);
-                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " mergedDiffMap BEFORE : " +  mergedDiffMap.toString());
-                                final Object mergedfinal = mergedDiffMap.merge(key, ((Map) right).get(key), new MergeBiFunction() ) ;
-                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " mergedDiffMap AFTER : " +  mergedDiffMap.toString());
+                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " mergedDiffMap BEFORE : " + mergedDiffMap.toString());
+                                final Object mergedfinal = mergedDiffMap.merge(key, ((Map) right).get(key), new MergeBiFunction());
+                                LOG.info(CommonUtils.printSubtabs(this.depthLevel, i) + " mergedDiffMap AFTER : " + mergedDiffMap.toString());
                             }
                         });
             }
@@ -130,16 +131,15 @@ public class CompareMaps {
         return mergedDiffMap;
     }
 
-
     public void addMissingEntry(final Map<String, Object> missingEntriesMap, int i, Map<String, Object> entriesToAddIn) {
         if (missingEntriesMap != null && missingEntriesMap.size() > 0) {
             missingEntriesMap.entrySet().stream()
                     .forEach(e -> {
-                        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Missing: " + e.getKey() + "  :\t" + e.getValue() + "  :\t" + e.getValue().getClass());
-                        LOG.info(CommonUtils.printTabs(this.depthLevel) + " Key Hierarchy of this Missing instance: " + keyHierarchy) ;
+                        if (!entriesToAddIn.containsKey(e.getKey())) {
+                            entriesToAddIn.put(e.getKey(), e.getValue());
+                            LOG.info(CommonUtils.printTabs(this.depthLevel) + " Missing Added: " + e.getKey() + "  :\t" + e.getValue() + "  :\t" + e.getValue().getClass());
+                        }
                     });
-
-            entriesToAddIn.putAll(missingEntriesMap);
         }
     }
 
