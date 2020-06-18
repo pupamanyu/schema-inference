@@ -2,7 +2,6 @@ package com.example.schemainfer.protogen.utils;
 
 import com.example.schemainfer.protogen.domain.SchemaCount;
 import com.example.schemainfer.protogen.javaudf.Protomap;
-import com.example.schemainfer.protogen.javaudf.SeqFilesScan;
 import com.example.schemainfer.protogen.rules.InferDatatype;
 
 import java.nio.ByteBuffer;
@@ -194,12 +193,37 @@ public class CommonUtils {
         return l;
     }
 
-    public static <K, V extends Comparable<V>> V findMaxValue(Map<K, V> map) {
+    public static <K, V extends Comparable<V>> K findMinKey(Map<K, V> map) {
         Optional<Entry<K, V>> maxEntry = map.entrySet()
                 .stream()
-                .max(Comparator.comparing(Map.Entry::getValue));
+                .min(Comparator.comparing(Map.Entry::getValue));
         return maxEntry.get()
-                .getValue();
+                .getKey() ;
+    }
+
+    public static Integer findMaxKey(Map<Integer, String> mapGroup) {
+        if(mapGroup.isEmpty()) {
+            return null;
+        }
+        int max = mapGroup.keySet().stream().max(Comparator.naturalOrder()).get();
+        Optional<Integer> first = mapGroup.entrySet().stream()
+                .filter(e -> e.getKey() == max)
+                .map(Entry::getKey).findFirst();
+
+        if (first.isPresent()) {
+            return first.get() ;
+        }
+        return null ;
+    }
+
+    public static String findMaxValue(Map<Integer, String> mapGroup) {
+        final Integer maxKey = findMaxKey(mapGroup);
+        return mapGroup.get(maxKey) ;
+    }
+
+    public static <K, V extends Comparable<V>> V findMinValue(Map<K, V> map) {
+        K minKey = findMinKey(map);
+        return map.get(minKey) ;
     }
 
 }
