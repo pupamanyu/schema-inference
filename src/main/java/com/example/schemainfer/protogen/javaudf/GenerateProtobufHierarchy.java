@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ConvertToProtobufSchema {
+public class GenerateProtobufHierarchy {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ConvertToProtobufSchema.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GenerateProtobufHierarchy.class);
 
     EventJsonSchema schemaToConvert;
     UniqueQueue<String> keyHierarchy = new UniqueQueue<>();
@@ -19,11 +19,11 @@ public class ConvertToProtobufSchema {
     StringBuilder sbuff = new StringBuilder();
     Map<String, Map<String, String>> keyMap = new HashMap<>();
 
-    public ConvertToProtobufSchema(EventJsonSchema schemaToConvert) {
+    public GenerateProtobufHierarchy(EventJsonSchema schemaToConvert) {
         this.schemaToConvert = schemaToConvert;
     }
 
-    public void generate() {
+    public Map<String, Map<String, String>> generate() {
         final Map<String, Object> firstAdditionalPropertiesMap = schemaToConvert.getAdditionalProperties();
         Map<Integer, String> iterKeyMap = new HashMap<>();
         iterKeyMap.put(0, "additionalproperties");
@@ -33,7 +33,7 @@ public class ConvertToProtobufSchema {
 
         checkRecursively(firstAdditionalPropertiesMap, 0, iterKeyMap);
         LOG.info("** Final keyHierarchy: {}", keyMap.toString());
-
+        return this.keyMap ;
     }
 
     private void checkProtosRecursevely(Map<String, Object> firstAdditionalPropertiesMap, int i, Map<Integer, String> iterKeyMap) {

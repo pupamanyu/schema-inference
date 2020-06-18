@@ -121,7 +121,7 @@ public class SeqFilesScan {
         }).countByValue();
         List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount(objectNodeLongMap, totalCount);
         EventJsonSchema mergedTopSchema = convertSchemaCountRDDtoDataset(spark, schemaCountList);
-        ConvertToProtobufSchema newSchemaGen = new ConvertToProtobufSchema(mergedTopSchema) ;
+        GenerateProtobufHierarchy newSchemaGen = new GenerateProtobufHierarchy(mergedTopSchema) ;
         newSchemaGen.generate();
     }
 
