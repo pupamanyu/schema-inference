@@ -122,7 +122,9 @@ public class SeqFilesScan {
         List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount(objectNodeLongMap, totalCount);
         EventJsonSchema mergedTopSchema = convertSchemaCountRDDtoDataset(spark, schemaCountList);
         GenerateProtobufHierarchy newSchemaGen = new GenerateProtobufHierarchy(mergedTopSchema) ;
-        newSchemaGen.generate();
+        Map<String, Map<String, String>> protoHierarchy = newSchemaGen.generate();
+        TransformProtobufHierarchy transformProtobufHierarchy = new TransformProtobufHierarchy(protoHierarchy) ;
+        transformProtobufHierarchy.generate();
     }
 
     private static void readValuesAsText(SparkSession spark, JavaSparkContext jsc) {
@@ -141,7 +143,11 @@ public class SeqFilesScan {
             return v1.toString();
         }).countByValue();
         List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount(objectNodeLongMap, totalCount);
-        convertSchemaCountRDDtoDataset(spark, schemaCountList);
+        EventJsonSchema mergedTopSchema = convertSchemaCountRDDtoDataset(spark, schemaCountList);
+        GenerateProtobufHierarchy newSchemaGen = new GenerateProtobufHierarchy(mergedTopSchema) ;
+        Map<String, Map<String, String>> protoHierarchy = newSchemaGen.generate();
+        TransformProtobufHierarchy transformProtobufHierarchy = new TransformProtobufHierarchy(protoHierarchy) ;
+        transformProtobufHierarchy.generate();
     }
 
     private static void convertRDDtoDataset(SparkSession spark, JavaRDD<Protomap> protoRDD) {
