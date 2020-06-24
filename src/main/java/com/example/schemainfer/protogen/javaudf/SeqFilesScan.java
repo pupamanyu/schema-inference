@@ -7,8 +7,17 @@ import com.example.schemainfer.protogen.json.CompareSchemas;
 import com.example.schemainfer.protogen.json.EventJsonSchema;
 import com.example.schemainfer.protogen.utils.CommonUtils;
 import com.example.schemainfer.protogen.utils.Constants;
+import com.example.schemainfer.protogen.utils.GCSBlobWriter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+///import com.google.cloud.storage.Blob;
+////import com.google.cloud.storage.BlobId;
+////import com.google.cloud.storage.Storage;
+////import com.google.cloud.storage.StorageOptions;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.spark.SparkConf;
@@ -22,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,10 +71,39 @@ public class SeqFilesScan {
         SparkConf conf = getSparkConf(mode) ;
         JavaSparkContext sc = new JavaSparkContext(conf);
         SparkSession spark = SparkSession.builder().config(conf).getOrCreate();
+       // testStorage() ;
 
         readAndProcessFiles(mode, sc, spark) ;
-
         registerSparkUDF(spark);
+    }
+
+    public static void testStorage() throws IOException {
+        String newString = "Hello, World!";
+
+        try {
+            Storage storage = StorageOptions.getDefaultInstance().getService();
+            byte[] bytes = newString.getBytes(Constants.UTF8_CHARSET);
+            Blob blob = storage.get(BlobId.of("schema-inference-out", "protos/gameevent.proto"));
+            LOG.info("1) Successful getting Storage ID: " + blob.toString()) ;
+
+            WritableByteChannel channel = blob.writer();
+            LOG.info("2) Successful getting WritableByteChannel :" + blob.toString()) ;
+            channel.write(ByteBuffer.wrap(newString.getBytes(Constants.UTF8_CHARSET)));
+            LOG.info("3) Successful writing TO hannel :" ) ;
+            channel.close();
+            LOG.info("4) Successful cloding hannel :" ) ;
+        } catch (Exception ioc) {
+            LOG.error("Got error-1 writing to storage: " + ioc.getMessage()) ;
+        }
+
+        GCSBlobWriter testWriter = new GCSBlobWriter("protos/gameevent.proto");
+
+        LOG.info("5) Successful opening GCSBlobWriter : "  + testWriter.toString()) ;
+        testWriter.write("Hello testing");
+        LOG.info("6) Successful writing GCSBlobWriter : "  + testWriter.toString()) ;
+        if (testWriter != null && testWriter.getWriterChannel() != null) {
+            testWriter.getWriterChannel().close();
+        }
     }
 
     /**
@@ -110,19 +150,9 @@ public class SeqFilesScan {
 
     private static void readValuesAsString(SparkSession spark, JavaSparkContext jsc) {
         JavaRDD<String> values = jsc.textFile(Constants.inputFile);
-        LOG.info("Values: " + values.toDebugString());
+      //  LOG.info("Values: " + values.toDebugString());
         JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap2O(values);
-        long totalCount = parsedRDD.count();
-        LOG.info("Parsed RDD totalCount: " + totalCount);
-        JavaRDD<ObjectNode> distinctObjectNodeRDD = parsedRDD.distinct();
-        LOG.info("Distinct RDD totalCount: " + distinctObjectNodeRDD.count());
-        Map<String, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
-            return v1.toString();
-        }).countByValue();
-        List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount(objectNodeLongMap, totalCount);
-        EventJsonSchema mergedTopSchema = convertSchemaCountRDDtoDataset(spark, schemaCountList);
-        GenerateProtobufHierarchy newSchemaGen = new GenerateProtobufHierarchy(mergedTopSchema) ;
-        newSchemaGen.generate();
+        processTransformations(spark, parsedRDD);
     }
 
     private static void readValuesAsText(SparkSession spark, JavaSparkContext jsc) {
@@ -132,6 +162,10 @@ public class SeqFilesScan {
         LOG.info("Values: " + values.toDebugString());
         LOG.info("Count of values: " + rdd.values().count());
         JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap31(values) ;
+        processTransformations(spark, parsedRDD);
+    }
+
+    private static void processTransformations(SparkSession spark, JavaRDD<ObjectNode> parsedRDD) {
         LOG.info("Parsed RDD: " + parsedRDD.toDebugString());
         Long totalCount = parsedRDD.count() ;
         LOG.info("Parsed RDD count: " + totalCount);
@@ -141,7 +175,11 @@ public class SeqFilesScan {
             return v1.toString();
         }).countByValue();
         List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount(objectNodeLongMap, totalCount);
-        convertSchemaCountRDDtoDataset(spark, schemaCountList);
+        EventJsonSchema mergedTopSchema = convertSchemaCountRDDtoDataset(spark, schemaCountList);
+        GenerateProtobufHierarchy newSchemaGen = new GenerateProtobufHierarchy(mergedTopSchema) ;
+        Map<String, Map<String, String>> protoHierarchy = newSchemaGen.generate();
+        TransformProtobufHierarchy transformProtobufHierarchy = new TransformProtobufHierarchy(spark, protoHierarchy) ;
+        transformProtobufHierarchy.generate();
     }
 
     private static void convertRDDtoDataset(SparkSession spark, JavaRDD<Protomap> protoRDD) {
@@ -180,6 +218,7 @@ public class SeqFilesScan {
          //   mergedSchemaDataset.write().json(Constants.outputFile2+i);
         }
 
+        LOG.info("Final Top Schema : " + mergedTopSchema.toString()) ;
         return mergedTopSchema ;
     }
 

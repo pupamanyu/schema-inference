@@ -1,12 +1,9 @@
 package com.example.schemainfer.protogen.javaudf;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.example.schemainfer.protogen.json.CompareSchemas;
 import com.example.schemainfer.protogen.json.EventJsonSchema;
-import com.example.schemainfer.protogen.utils.JsonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
@@ -14,12 +11,14 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
+import scala.util.parsing.json.JSONObject;
+
+import java.io.IOException;
+import java.util.*;
 
 public class SchemaCompareAsDS {
     //  private static String inputFile2 = "/Users/rajnish.malik/temp/rt/e.out/part-00001-9fa6df99-660f-46ca-9c4e-25b719dcb855-c000.json";
@@ -62,14 +61,14 @@ public class SchemaCompareAsDS {
             EventJsonSchema eventJsonSchema = parseJson(ss);
             eventList.add(eventJsonSchema);
 
-            JSONParser parser = new JSONParser();
-            try {
-                JSONObject json = (JSONObject) parser.parse(ss);
-                jsonObjList.add(json) ;
-                System.out.println("JSONObject = " + json) ;
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+         //   JSONParser parser = new JSONParser();
+          //  try {
+          //      JSONObject json = (JSONObject) parser.parse(ss);
+          //      jsonObjList.add(json) ;
+           //     System.out.println("JSONObject = " + json) ;
+          //  } catch (ParseException e) {
+           //     e.printStackTrace();
+          //  }
 
         }
 

@@ -34,7 +34,7 @@ public class CompareSchemas {
         final Object mergedProperties = mergedMap.get("properties");
         mergedJsonSchema.setAdditionalProperty("properties", mergedProperties);
         LOG.info("---------------------------------------------------------------------") ;
-        LOG.info("FINAL MERGED EventJsonSchema SCHEMA: " + mergedJsonSchema.toString())         ;
+        LOG.info("Merged EventJsonSchema SCHEMA: " + mergedJsonSchema.toString())         ;
         return mergedJsonSchema ;
 
        // LOG.info("KeyHierarchy: " + comapreMaps.getKeyHierarchy()) ;

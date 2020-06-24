@@ -2,6 +2,7 @@ package com.example.schemainfer.protogen.javaudf;
 
 import com.example.schemainfer.protogen.json.EventJsonSchema;
 import com.example.schemainfer.protogen.utils.CommonUtils;
+import com.example.schemainfer.protogen.utils.Constants;
 import com.example.schemainfer.protogen.utils.UniqueQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,6 +128,12 @@ public class GenerateProtobufHierarchy {
         String value = (String) obj;
 
         if (value.equalsIgnoreCase("object") || value.equalsIgnoreCase("array")) {
+            if (value.equalsIgnoreCase("array")) {
+                String colName = CommonUtils.findMaxValue(iterKeyMap);
+                String protoName = determineProtoNameForColumn(iterKeyMap);
+                storeColumnInProto(protoName, colName, Constants.NESTED_ARRAY_PROTO);
+            }
+            System.out.println("Got array it seems") ;
         } else {
             determineDatatypeForColumn(iterKeyMap, obj);
         }
@@ -143,7 +150,7 @@ public class GenerateProtobufHierarchy {
             return;
         }
         if (obj instanceof Map) {
-            //  datatype = "SUBS-PROTO" ;
+            //  datatype = Constants.NESTED_PROTO ;
         } else {
             datatype = obj.toString();
             storeColumnInProto(protoName, colName, datatype);
@@ -162,12 +169,11 @@ public class GenerateProtobufHierarchy {
             return;
         }
         if (obj instanceof Map) {
-            datatype = "SUBS-PROTO";
+            datatype = Constants.NESTED_PROTO;
             storeColumnInProto(protoName, colName, datatype);
         } else {
             //  datatype = obj.toString();
         }
-
     }
 
     private String determineProtoNameForColumn(Map<Integer, String> iterKeyMap) {
