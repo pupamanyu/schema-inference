@@ -21,9 +21,12 @@
   <packaging>jar</packaging>
   <name>Protobuf UDF</name>
   <properties>
-  <maven-shade-plugin.version>3.2.3</maven-shade-plugin.version>
+    <maven-shade-plugin.version>3.2.3</maven-shade-plugin.version>
+    <guava.version>23.2-jre</guava.version>
+    <!--    <guava.version>28.2-jre</guava.version>-->
+    <!--    <guava.version>15.0</guava.version>-->
   </properties>
-  
+
   <repositories>
     <repository>
       <id>cloudera-repos</id>
@@ -31,10 +34,10 @@
       <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
     </repository>
 
-      <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
-      </repository>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
 
   </repositories>
 
@@ -54,7 +57,7 @@
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
           <descriptorRefs>
-          <descriptorRef>jar-with-dependencies</descriptorRef>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
           <archive>
             <manifest>
@@ -74,24 +77,122 @@
         </executions>
       </plugin>
 
-    </plugins>  
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>1.4.1</version>
+        <configuration>
+          <rules><dependencyConvergence/></rules>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>${maven-shade-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>com.example.schemainfer.protogen.javaudf.SeqFilesScan</mainClass>
+                </transformer>
+              </transformers>
+
+              <finalName>original-schemainfer-${project.version}-shaded</finalName>
+              <relocations>
+                <relocation>
+                  <pattern>com.google.common</pattern>
+                  <shadedPattern>shaded.com.google.common</shadedPattern>
+                </relocation>
+              </relocations>
+              <artifactSet>
+                <includes>
+                  <include>*:*</include>
+                </includes>
+              </artifactSet>
+
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
   </build>
 
   <dependencies>
+    <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+    <!--    <dependency>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+    &lt;!&ndash;           <version>15.0</version>&ndash;&gt;
+    &lt;!&ndash;      <version>${guava.version}</version>&ndash;&gt;
+        </dependency>-->
+
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.12</artifactId>
       <version>2.4.5</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava-jdk5</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.glassfish.jersey.bundles.repackaged</groupId>
+          <artifactId>jersey-guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-sql_2.12</artifactId>
       <version>2.4.5</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava-jdk5</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-hive_2.12</artifactId>
       <version>2.4.5</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava-jdk5</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -104,12 +205,32 @@
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-parsers</artifactId>
       <version>1.24.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava-jdk5</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-dl</artifactId>
       <version>1.24.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava-jdk5</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->
@@ -130,13 +251,6 @@
       <groupId>args4j</groupId>
       <artifactId>args4j</artifactId>
       <version>2.33</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>15.0</version>
     </dependency>
 
     <dependency>
@@ -160,20 +274,38 @@
       <version>2.11.0</version>
     </dependency>
 
-<!--    <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
-      <version>2.8.6</version>
-    </dependency>-->
+    <!--    <dependency>
+          <groupId>com.google.code.gson</groupId>
+          <artifactId>gson</artifactId>
+          <version>2.8.6</version>
+        </dependency>-->
+
+    <!-- https://mvnrepository.com/artifact/com.google.cloud/google-cloud-storage -->
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-storage</artifactId>
+    </dependency>
 
   </dependencies>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.cloud</groupId>
+        <artifactId>libraries-bom</artifactId>
+        <version>7.0.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
-<!--  <scm>-->
-<!--    <url>https://github.com/simplymequeeny/json-string-schema-generator</url>-->
-<!--    <connection>scm:git:git://github.com/simplymequeeny/json-string-schema-generator.git</connection>-->
-<!--    <developerConnection>scm:git:git@github.com:simplymequeeny/json-string-schema-generator.git</developerConnection>-->
-<!--    <tag>HEAD</tag>-->
-<!--  </scm>-->
+
+  <!--  <scm>-->
+  <!--    <url>https://github.com/simplymequeeny/json-string-schema-generator</url>-->
+  <!--    <connection>scm:git:git://github.com/simplymequeeny/json-string-schema-generator.git</connection>-->
+  <!--    <developerConnection>scm:git:git@github.com:simplymequeeny/json-string-schema-generator.git</developerConnection>-->
+  <!--    <tag>HEAD</tag>-->
+  <!--  </scm>-->
 
 </project>
