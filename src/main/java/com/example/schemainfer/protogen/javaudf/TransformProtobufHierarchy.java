@@ -1,12 +1,13 @@
 package com.example.schemainfer.protogen.javaudf;
 
+import com.example.schemainfer.protogen.domain.ProtoLine;
 import com.example.schemainfer.protogen.utils.Constants;
 import com.example.schemainfer.protogen.utils.GCSBlobWriter;
 import com.example.schemainfer.protogen.utils.StringUtils;
 import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Tuple5;
+
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -22,7 +23,8 @@ public class TransformProtobufHierarchy {
     private Map<String, Map<String, String>> outProtoMap = new HashMap<>();
     private Map<String, PrintWriter> outProtoFileMap = new HashMap<>();
     private Map<String, GCSBlobWriter> outGCSProtoFileMap = new HashMap<>();
-    private Map<String, List<Tuple5>> outSparkDatasetMap = new HashMap<>();
+    private Map<String, List<ProtoLine>> outSparkDatasetMap = new HashMap<>();
+    private Map<String, List<String>> outProtoTextMap = new HashMap<>();
     private boolean isLocal = false ;
     SparkSession spark ;
 
@@ -34,7 +36,8 @@ public class TransformProtobufHierarchy {
     }
 
     public void generate() {
-        this.isLocal = false ;
+        Constants c = new Constants() ;
+        this.isLocal = c.isIsLocal() ;
         LOG.info("** Input keyHierarchy: " + inProtoMap.toString());
         checkShortProtoMap();
         checkShortProtoMap(); // delibratly called twice to take care of elements could be in different order
@@ -44,7 +47,7 @@ public class TransformProtobufHierarchy {
         openFileWriters(isLocal);
         writeToProtoFile(isLocal);
 
-        TransformProtoIntoSparkDataset tt = new TransformProtoIntoSparkDataset(this.spark, this.outSparkDatasetMap) ;
+       TransformProtoIntoSparkDataset tt = new TransformProtoIntoSparkDataset(this.spark, this.outSparkDatasetMap, this.outProtoTextMap) ;
     }
 
     private void printShortProtoMap() {
@@ -68,11 +71,14 @@ public class TransformProtobufHierarchy {
             String longProtoName = proto.getKey();
             PrintWriter printWriter = null;
             GCSBlobWriter gcsBlobWriter = null ;
-            List<Tuple5> sparkProtoLinesList = null ;
+            List<ProtoLine> sparkProtoLinesList = null ;
+            List<String> outProtoTextLinesList = null ;
+            AtomicInteger lineNumber = new AtomicInteger();
             try {
                 Map<String, String> colDatatypeMap = proto.getValue();
 
                 String shortProtoName = getShortProtoname(longProtoName);
+                String relativeFileName = determineRelativeFileName(longProtoName) ;
                 protoctr.getAndIncrement();
 
                 final List<?> importProtoList = colDatatypeMap.entrySet().stream()
@@ -82,73 +88,75 @@ public class TransformProtobufHierarchy {
                             return stream;
                         }).collect(Collectors.toList());
 
+                sparkProtoLinesList = outSparkDatasetMap.get(longProtoName);
+                outProtoTextLinesList = outProtoTextMap.get(longProtoName) ;
                 if (this.isLocal) {
                     printWriter = outProtoFileMap.get(longProtoName);
                 } else {
                     gcsBlobWriter = outGCSProtoFileMap.get(longProtoName);
-                    sparkProtoLinesList = outSparkDatasetMap.get(longProtoName);
                 }
 
                 String syntaxLine = "syntax \"proto3\"\n" ;
+                addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, null, "syntax", "proto3", null, null, null) ;
                 if (this.isLocal) {
                     printWriter.write(syntaxLine);
                 } else {
                     gcsBlobWriter.write(syntaxLine);
-                    addSparkLine(sparkProtoLinesList, null, "syntax", "proto3", null, null) ;
                 }
 
                 String packaLine = "package " + Constants.GAME_ROOT + "\n" ;
+                addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, "P", "option", "package", Constants.GAME_ROOT, null, null) ;
                 if (this.isLocal) {
                     printWriter.write(packaLine);
                 } else {
                     gcsBlobWriter.write(packaLine);
-                    addSparkLine(sparkProtoLinesList, null, "package", Constants.GAME_ROOT, null, null) ;
                 }
 
                 PrintWriter finalPrintWriter = printWriter;
 
                 for (Object imp : importProtoList) {
                     String importedLine = "import " + imp + "\n" ;
+                    addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, "I", "import", imp.toString(), null, null, null) ;
                     if (this.isLocal) {
                         finalPrintWriter.write(importedLine);
                     } else {
                         gcsBlobWriter.writeToGCS(importedLine);
-                        addSparkLine(sparkProtoLinesList, null, "import", imp.toString(), null, null) ;
                     }
                 }
 
                 String javaPackage = "option java_package = \"com.example.schemainfer.lol.proto\";\n\n" ;
+                addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, "O", "option", "java_package =", "com.example.schemainfer.lol.proto", null, null, null) ;
                 if (this.isLocal) {
                     printWriter.write(javaPackage);
                 } else {
                     gcsBlobWriter.writeToGCS(javaPackage);
-                    addSparkLine(sparkProtoLinesList, null, "option", "java_package =", "com.example.schemainfer.lol.proto", null) ;
                 }
 
                 String multipleFilesLine = "option java_multiple_files = true;\n\n" ;
+                addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, "O", "option", "java_multiple_files =", "true", null, null) ;
                 if (this.isLocal) {
                     printWriter.write(multipleFilesLine);
                 } else {
                     gcsBlobWriter.writeToGCS("option java_multiple_files = true;\n\n");
-                    addSparkLine(sparkProtoLinesList, null, "option", "java_multiple_files =", "true", null) ;
                 }
 
                 String capitalizedName = StringUtils.capitalize(shortProtoName) ;
                 String messageLine = "message " + capitalizedName + "\t{\n" ;
+                addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, "M", "message", capitalizedName, "\t{", null, null) ;
                 if (this.isLocal) {
                     printWriter.write(messageLine);
                 } else {
                     gcsBlobWriter.writeToGCS(messageLine);
-                    addSparkLine(sparkProtoLinesList, null, "message", capitalizedName, "\t{", null) ;
-                }
+                 }
 
                 AtomicInteger colCtr = new AtomicInteger();
                 PrintWriter finalPrintWriter1 = printWriter;
                 GCSBlobWriter finalGCSBlobWriter = gcsBlobWriter;
-                List<Tuple5> finalSparkProtoLinesList = sparkProtoLinesList;
+                List<ProtoLine> finalSparkProtoLinesList = sparkProtoLinesList;
+                List<String> finalOutProtoTextLinesList = outProtoTextLinesList;
                 colDatatypeMap.entrySet()
                         .forEach(coltype -> {
-                            writeColumnsToProtoFile(colCtr, coltype, longProtoName, protoctr, finalPrintWriter1, finalGCSBlobWriter, finalSparkProtoLinesList);
+                            writeColumnsToProtoFile(lineNumber.getAndIncrement(), colCtr, coltype, relativeFileName, protoctr, finalPrintWriter1, finalGCSBlobWriter, finalSparkProtoLinesList, finalOutProtoTextLinesList);
                         });
             } finally {
                 if (this.isLocal) {
@@ -169,9 +177,30 @@ public class TransformProtobufHierarchy {
         });
     }
 
-    private void addSparkLine(List<Tuple5> sparkProtoLinesList, String col1, String col2, String col3, String col4, String col5) {
-        Tuple5 newTuple = new Tuple5<>(null, col1, col2, col3, col4) ;
+    private String determineRelativeFileName(String longProtoName) {
+        String fileName;
+        String shortProtoName = getShortProtoname(longProtoName);
+        if (shortProtoName.equalsIgnoreCase(Constants.EVENT_TYPE)) {
+            fileName = shortProtoName + ".proto";
+        } else {
+            fileName = Constants.GAME_ENTITIES + shortProtoName + ".proto";
+        }
+        return fileName;
+    }
+
+    private void addSparkLine(Integer lineNumber, List<ProtoLine> sparkProtoLinesList, List<String> outProtoTextLinesList, String fileName, String lineType,
+                              String col0, String col1, String col2, String col3, String col4) {
+        ProtoLine newTuple = new ProtoLine(lineNumber, null, fileName, lineType, col0, col1, col2, col3, col4) ;
+
         sparkProtoLinesList.add(newTuple) ;
+        StringBuffer buff = new StringBuffer() ;
+        if (col0 != null) {buff.append(col0).append("\t") ;}
+        if (col1 != null) {buff.append(col1).append("\t") ;}
+        if (col2 != null) {buff.append(col2).append("\t") ;}
+        if (col3 != null) {buff.append(col3).append("\t") ;}
+        if (col4 != null) {buff.append(col4).append("\t") ;}
+
+        outProtoTextLinesList.add(buff.toString()) ;
     }
 
     private void checkShortProtoMap() {
@@ -248,6 +277,8 @@ public class TransformProtobufHierarchy {
             PrintWriter printwiter = null;
             GCSBlobWriter gcsBlobWriter = null ;
             try {
+                outSparkDatasetMap.put(longProtoName, new ArrayList<>()) ;
+                outProtoTextMap.put(longProtoName, new ArrayList<>()) ;
                 if (isLocal) {
                     myWriter = new FileWriter(fileName);
                     printwiter = new PrintWriter(myWriter);
@@ -256,7 +287,6 @@ public class TransformProtobufHierarchy {
                     LOG.info("GCSFileName : " + gcsfileName);
                     gcsBlobWriter = new GCSBlobWriter(gcsfileName);
                     outGCSProtoFileMap.put(longProtoName, gcsBlobWriter);
-                    outSparkDatasetMap.put(longProtoName, new ArrayList<>()) ;
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
@@ -353,8 +383,9 @@ public class TransformProtobufHierarchy {
         return importProtosList;
     }
 
-    private String writeColumnsToProtoFile(AtomicInteger i, Map.Entry<String, String> m, String longProtoName, AtomicInteger protoctr,
-                                           PrintWriter printWriter, GCSBlobWriter finalGCSBlobWriter, List<Tuple5> sparkList) {
+    private String writeColumnsToProtoFile(Integer lineNumber, AtomicInteger i, Map.Entry<String, String> m, String relativeFileName, AtomicInteger protoctr,
+                                           PrintWriter printWriter, GCSBlobWriter finalGCSBlobWriter, List<ProtoLine> sparkList,
+                                           List<String> textLinesList) {
         // printProtos(protoArray, protoctr.get());
         String datatype = m.getValue();
         String colName = m.getKey();
@@ -381,7 +412,7 @@ public class TransformProtobufHierarchy {
             printWriter.write(columnLine);
         } else {
             finalGCSBlobWriter.writeToGCS(columnLine);
-            addSparkLine(sparkList, col0, transformedDatatype, colName, String.valueOf(colNum), null);
+            addSparkLine(lineNumber++, sparkList, textLinesList, relativeFileName, "C", col0, transformedDatatype, colName, String.valueOf(colNum), null);
         }
         return colName;
     }

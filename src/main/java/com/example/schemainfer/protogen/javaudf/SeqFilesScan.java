@@ -1,6 +1,9 @@
 package com.example.schemainfer.protogen.javaudf;
 
+import com.example.schemainfer.protogen.domain.SchemaColumnMap;
 import com.example.schemainfer.protogen.domain.SchemaCount;
+import com.example.schemainfer.protogen.functions.MapColumnIntoObjectNode;
+import com.example.schemainfer.protogen.functions.MapObjectNodesMapToColumn;
 import com.example.schemainfer.protogen.functions.ProcessStringColumnAsObjectNode;
 import com.example.schemainfer.protogen.functions.ProcessTextColumn2;
 import com.example.schemainfer.protogen.json.CompareSchemas;
@@ -29,6 +32,7 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.DataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -74,7 +78,7 @@ public class SeqFilesScan {
        // testStorage() ;
 
         readAndProcessFiles(mode, sc, spark) ;
-        registerSparkUDF(spark);
+        //registerSparkUDF(spark);
     }
 
     public static void testStorage() throws IOException {
@@ -151,8 +155,10 @@ public class SeqFilesScan {
     private static void readValuesAsString(SparkSession spark, JavaSparkContext jsc) {
         JavaRDD<String> values = jsc.textFile(Constants.inputFile);
       //  LOG.info("Values: " + values.toDebugString());
-        JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap2O(values);
-        processTransformations(spark, parsedRDD);
+      //  JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap2O(values);
+        JavaRDD<Tuple2<String, ObjectNode>> parseRDD = transformFValueIntoProromap21(values);
+
+        processTransformationsMATCH(spark, parseRDD);
     }
 
     private static void readValuesAsText(SparkSession spark, JavaSparkContext jsc) {
@@ -165,16 +171,92 @@ public class SeqFilesScan {
         processTransformations(spark, parsedRDD);
     }
 
+    private static void processMatches(SparkSession spark, JavaRDD<Tuple2<String, ObjectNode>> parsedRDD) {
+       // final Dataset<Row> sparkDataFrame = spark.createDataFrame(parsedRDD, Tuple2.class);
+
+        final List<SchemaColumnMap> schemaColumnMaps = parsedRDD.map((v1) -> {
+            String colValue = v1._1();
+            String schema = v1._2().toString();
+            return new SchemaColumnMap(schema, colValue);
+        }).collect();
+
+        final Dataset<Row> sparkDataFrame = spark.createDataFrame(schemaColumnMaps, SchemaColumnMap.class);
+        System.out.println("Tuple dataset start: " + sparkDataFrame.count()) ;
+
+        Dataset<Row> dataSet1 = sparkDataFrame.groupBy("schema").agg(org.apache.spark.sql.functions.collect_list("colValue")).limit(5).toDF() ;
+        dataSet1.show() ;
+        System.out.println("Tuple dataset end: " + sparkDataFrame.count()) ;
+
+        if (!Constants.isLocal) {
+            dataSet1.write()
+                    .format("bigquery")
+                    .option("temporaryGcsBucket", Constants.gcsTempLocation)
+                    .mode(SaveMode.Overwrite)
+                    .save(Constants.BIG_QUERY_DATASET + "." + Constants.BIG_QUERY_SAMPLE_SCHEMA);
+        }
+
+    }
+
+
+    private static void processTransformationsMATCH(SparkSession spark, JavaRDD<Tuple2<String, ObjectNode>> parsedRDD) {
+        LOG.info("Parsed RDD: " + parsedRDD.toDebugString());
+        Long totalCount = parsedRDD.count() ;
+        LOG.info("Parsed RDD count: " + totalCount);
+
+       //// JavaRDD<ObjectNode> distinctObjectNodeRDD = parsedRDD.map(t -> t._2()).distinct() ;
+        //JavaRDD<ObjectNode> distinctObjectNodeRDD = parsedRDD.distinct();
+
+        /////// Begin of match objectNode with column
+        processMatches(spark, parsedRDD) ;
+        ////// End of match objectNode with column
+
+        Map<ObjectNode, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
+            return v1._2();
+        }).countByValue();
+
+        LOG.info("Distinct RDD count: " + objectNodeLongMap.size());
+/*        List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount2(objectNodeLongMap, totalCount);
+        EventJsonSchema mergedTopSchema = convertSchemaCountRDDtoDataset(spark, schemaCountList);
+        GenerateProtobufHierarchy newSchemaGen = new GenerateProtobufHierarchy(mergedTopSchema) ;
+        Map<String, Map<String, String>> protoHierarchy = newSchemaGen.generate();
+        TransformProtobufHierarchy transformProtobufHierarchy = new TransformProtobufHierarchy(spark, protoHierarchy) ;
+        transformProtobufHierarchy.generate();*/
+    }
+
+    private static void processTransformations2(SparkSession spark, JavaRDD<ObjectNode> parsedRDD) {
+        LOG.info("Parsed RDD: " + parsedRDD.toDebugString());
+        Long totalCount = parsedRDD.count() ;
+        LOG.info("Parsed RDD count: " + totalCount);
+        /////JavaRDD<ObjectNode> distinctObjectNodeRDD = parsedRDD.distinct();
+        /////LOG.info("Distinct RDD count: " + distinctObjectNodeRDD.count());
+        Map<String, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
+            return v1.toString();
+        }).countByValue();
+        LOG.info("Distinct RDD count value: " + objectNodeLongMap.size());
+        List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount(objectNodeLongMap, totalCount);
+        EventJsonSchema mergedTopSchema = convertSchemaCountRDDtoDataset(spark, schemaCountList);
+        GenerateProtobufHierarchy newSchemaGen = new GenerateProtobufHierarchy(mergedTopSchema) ;
+        Map<String, Map<String, String>> protoHierarchy = newSchemaGen.generate();
+        TransformProtobufHierarchy transformProtobufHierarchy = new TransformProtobufHierarchy(spark, protoHierarchy) ;
+        transformProtobufHierarchy.generate();
+    }
+
     private static void processTransformations(SparkSession spark, JavaRDD<ObjectNode> parsedRDD) {
         LOG.info("Parsed RDD: " + parsedRDD.toDebugString());
         Long totalCount = parsedRDD.count() ;
         LOG.info("Parsed RDD count: " + totalCount);
-        JavaRDD<ObjectNode> distinctObjectNodeRDD = parsedRDD.distinct();
-        LOG.info("Distinct RDD count: " + distinctObjectNodeRDD.count());
-        Map<String, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
-            return v1.toString();
+        /////JavaRDD<ObjectNode> distinctObjectNodeRDD = parsedRDD.distinct();
+        /////LOG.info("Distinct RDD count: " + distinctObjectNodeRDD.count());
+
+        Map<ObjectNode, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
+            return v1;
         }).countByValue();
-        List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount(objectNodeLongMap, totalCount);
+
+        LOG.info("Distinct RDD count value " + objectNodeLongMap.size());
+
+       ////// List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount(objectNodeLongMap, totalCount);
+        List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount2(objectNodeLongMap, totalCount);
+
         EventJsonSchema mergedTopSchema = convertSchemaCountRDDtoDataset(spark, schemaCountList);
         GenerateProtobufHierarchy newSchemaGen = new GenerateProtobufHierarchy(mergedTopSchema) ;
         Map<String, Map<String, String>> protoHierarchy = newSchemaGen.generate();
@@ -231,7 +313,7 @@ public class SeqFilesScan {
             }
         }, DataTypes.StringType);
 
-        spark.sql("SELECT JSCHEMA(schema) AS jsonschema FROM gameevent").show();
+       // spark.sql("SELECT JSCHEMA(schema) AS jsonschema FROM gameevent").show();
     }
 
     private static JavaRDD<ObjectNode> transformFValueIntoProromap31(JavaRDD<Text> values) {
@@ -244,6 +326,23 @@ public class SeqFilesScan {
         return values.map(new ProcessStringColumnAsObjectNode()).filter((v1) -> {
             return v1 != null;
         });
+    }
+
+    private static JavaRDD<Tuple2<String, ObjectNode>> transformFValueIntoProromap22(JavaRDD<String> values) {
+        final JavaRDD<Tuple2<String, ObjectNode>> tuple2JavaRDD = values.map(new MapColumnIntoObjectNode()).filter((v1) -> {
+            return v1 != null;
+        });
+
+        return tuple2JavaRDD ;
+    }
+
+    private static JavaRDD<Tuple2<String, ObjectNode>> transformFValueIntoProromap21(JavaRDD<String> values) {
+        return values.map(new MapColumnIntoObjectNode()).filter((v1) -> {
+            return v1 != null;
+        });
+
+        //final JavaRDD<ObjectNode> osRDD = tuple2JavaRDD.map(t -> t._2()).filter(s -> s != null) ;
+        //return osRDD ;
     }
 
     private static List<EventJsonSchema> getSchemaColumnDataset(Dataset<Row> ds) {

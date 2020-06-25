@@ -37,14 +37,11 @@ public class GCSBlobWriter {
                 blob = storage.create(
                                 BlobInfo.newBuilder(Constants.gcsBucketName, relativePathtOGcsObject)
                                         .setContentType("application/text")
-                                        .setAcl(new ArrayList<>(Arrays.asList(Acl.of(Acl.User.ofAllUsers(), Acl.Role.READER))))
+                                        .setAcl(new ArrayList<>(Arrays.asList(Acl.of(Acl.User.ofAllAuthenticatedUsers(), Acl.Role.READER))))
                                         .build());
             }
 
             this.writerChannel = blob.writer();
-            String hello = "hellodear" ;
-            this.writerChannel.write(ByteBuffer.wrap(hello.getBytes(Constants.UTF8_CHARSET)));
-
         } catch (Throwable e) {
             LOG.error("Error opening channel to GCS in GCSBlobWriter: " + e.getMessage());
             e.printStackTrace();
