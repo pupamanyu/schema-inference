@@ -3,6 +3,7 @@ package com.example.schemainfer.protogen.javaudf;
 import com.example.schemainfer.protogen.domain.ProtoLine;
 import com.example.schemainfer.protogen.utils.Constants;
 import com.example.schemainfer.protogen.utils.GCSBlobWriter;
+import com.example.schemainfer.protogen.utils.SchemaInferConfig;
 import com.example.schemainfer.protogen.utils.StringUtils;
 import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ public class TransformProtobufHierarchy {
     private Map<String, List<ProtoLine>> outSparkDatasetMap = new HashMap<>();
     private Map<String, List<String>> outProtoTextMap = new HashMap<>();
     private boolean isLocal = false ;
+    String applicationId ;
     SparkSession spark ;
 
     private static final Logger LOG = LoggerFactory.getLogger(TransformProtobufHierarchy.class);
@@ -33,11 +35,11 @@ public class TransformProtobufHierarchy {
     public TransformProtobufHierarchy(SparkSession spark, Map<String, Map<String, String>> inProtoMap) {
         this.inProtoMap = inProtoMap;
         this.spark = spark ;
+        applicationId = spark.sparkContext().applicationId();
     }
 
     public void generate() {
-        Constants c = new Constants() ;
-        this.isLocal = c.isIsLocal() ;
+        this.isLocal = Constants.isLocal;
         LOG.info("** Input keyHierarchy: " + inProtoMap.toString());
         checkShortProtoMap();
         checkShortProtoMap(); // delibratly called twice to take care of elements could be in different order
@@ -48,6 +50,7 @@ public class TransformProtobufHierarchy {
         writeToProtoFile(isLocal);
 
        TransformProtoIntoSparkDataset tt = new TransformProtoIntoSparkDataset(this.spark, this.outSparkDatasetMap, this.outProtoTextMap) ;
+       tt.writeSpark();
     }
 
     private void printShortProtoMap() {
@@ -113,7 +116,6 @@ public class TransformProtobufHierarchy {
                 }
 
                 PrintWriter finalPrintWriter = printWriter;
-
                 for (Object imp : importProtoList) {
                     String importedLine = "import " + imp + "\n" ;
                     addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, "I", "import", imp.toString(), null, null, null) ;
@@ -190,7 +192,7 @@ public class TransformProtobufHierarchy {
 
     private void addSparkLine(Integer lineNumber, List<ProtoLine> sparkProtoLinesList, List<String> outProtoTextLinesList, String fileName, String lineType,
                               String col0, String col1, String col2, String col3, String col4) {
-        ProtoLine newTuple = new ProtoLine(lineNumber, null, fileName, lineType, col0, col1, col2, col3, col4) ;
+        ProtoLine newTuple = new ProtoLine(lineNumber, this.applicationId, fileName, lineType, col0, col1, col2, col3, col4) ;
 
         sparkProtoLinesList.add(newTuple) ;
         StringBuffer buff = new StringBuffer() ;
@@ -217,7 +219,7 @@ public class TransformProtobufHierarchy {
                         outProtoMap.put(longProtoName, new HashMap<>());
                     } else {
                         final Map<String, String> remove = outProtoMap.remove(longProtoName);
-                        LOG.info("Founddddd items. Removed: " + remove);
+                        LOG.info("Found items. Removed: " + remove);
                     }
                     colDatatypeMap.entrySet().stream()
                             .forEach(coltype -> {
@@ -305,9 +307,11 @@ public class TransformProtobufHierarchy {
             }
         } else {
             if (shortProtoName.equalsIgnoreCase(Constants.EVENT_TYPE)) {
-                fileName = Constants.gcsProtoLocation + shortProtoName + ".proto";
+              //  fileName = Constants.gcsProtoLocation + shortProtoName + ".proto";
+                fileName = SchemaInferConfig.getInstance().getOutputBucketName() + shortProtoName + ".proto";
             } else {
-                fileName = Constants.gcsProtoLocation + Constants.GAME_ENTITIES + shortProtoName + ".proto";
+              //  fileName = Constants.gcsProtoLocation + Constants.GAME_ENTITIES + shortProtoName + ".proto";
+                fileName = SchemaInferConfig.getInstance().getOutputBucketName() + Constants.GAME_ENTITIES + shortProtoName + ".proto";
             }
         }
         return fileName;
@@ -345,19 +349,12 @@ public class TransformProtobufHierarchy {
             return;
         }
 
-        // if (datatype.equals(Constants.NESTED_PROTO) || datatype.equals(Constants.NESTED_ARRAY_PROTO) ) {
-        //     datatype = Constants.GAME_ENTITIES + StringUtils.capitalize(colName) ;
-        //     datatype = StringUtils.replaceStringInString(datatype, "/", ".") ;
-        // }
-
         stringStringMap.put(colName, datatype);
     }
 
     private String determineIfArrayDatatypeInColumn(int i, Map.Entry<String, String> m, String longProtoName, AtomicInteger protoctr) {
-        // printProtos(protoArray, protoctr.get());
         String datatype = m.getValue();
         String colName = m.getKey();
-        //LOG.info("\t" + datatype + "\t" + colName + "\t = " + i);
         if (datatype.equalsIgnoreCase(Constants.NESTED_ARRAY_PROTO)) {
             String sf = String.format("FOUND ARRAY --> proto: %s datatype: %s colname %s ", longProtoName, datatype, colName);
             LOG.info(sf);
@@ -386,11 +383,9 @@ public class TransformProtobufHierarchy {
     private String writeColumnsToProtoFile(Integer lineNumber, AtomicInteger i, Map.Entry<String, String> m, String relativeFileName, AtomicInteger protoctr,
                                            PrintWriter printWriter, GCSBlobWriter finalGCSBlobWriter, List<ProtoLine> sparkList,
                                            List<String> textLinesList) {
-        // printProtos(protoArray, protoctr.get());
         String datatype = m.getValue();
         String colName = m.getKey();
         String transformedDatatype = datatype;
-        //  LOG.info("\t" + datatype + "\t" + colName + "\t = " + i);
         if (datatype.equals(Constants.NESTED_PROTO) || datatype.equals(Constants.NESTED_ARRAY_PROTO)) {
             transformedDatatype = Constants.GAME_ENTITIES + StringUtils.capitalize(colName);
             transformedDatatype = StringUtils.replaceStringInString(transformedDatatype, "/", ".");

@@ -179,7 +179,7 @@ public class CommonUtils {
         List<SchemaCount> schemaCountList = new ArrayList();
         final List<SchemaCount> schemaCounts = sorttedMap.entrySet().stream().limit(20).map(entry -> {
             SchemaCount schemaCount = new SchemaCount();
-            schemaCount.setSchema((String) entry.getKey());
+            schemaCount.setSchema((String) entry.getKey().toString());
             long thisCount = (Long) entry.getValue();
             schemaCount.setCount(thisCount);
             schemaCount.setPercent(calculatePercentage(thisCount, totalCount));

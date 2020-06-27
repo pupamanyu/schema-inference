@@ -1,5 +1,6 @@
 package com.example.schemainfer.protogen.functions;
 
+import com.example.schemainfer.protogen.domain.SchemaColumnMap;
 import com.example.schemainfer.protogen.javaudf.Protomap;
 import com.example.schemainfer.protogen.utils.Constants;
 import com.example.schemainfer.protogen.utils.ConvertUtils;
@@ -8,23 +9,26 @@ import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProcessTextColumn2 implements Function<Text, ObjectNode>, Serializable {
-    static final Logger LOG = LoggerFactory.getLogger(ProcessTextColumn2.class);
+public class ProcessTextColumn4 implements Function<Text, SchemaColumnMap>, Serializable {
+    static final Logger LOG = LoggerFactory.getLogger(ProcessTextColumn4.class);
 
-    public ProcessTextColumn2() {
+    public ProcessTextColumn4() {
     }
 
-    public ObjectNode call(Text text) throws Exception {
+    public SchemaColumnMap call(Text text) throws Exception {
         String s = ConvertUtils.bytesToString(text.getBytes(), 0, text.getLength());
-        return this.processRow(s);
+        ObjectNode onode = this.processRow(s);
+        return new SchemaColumnMap(onode, s) ;
     }
 
     public ObjectNode processRow(String s) {
+
         String[] ss = s.split(Constants.SEQUENCE_FIELD_DELIMITER, -1);
         List<Protomap> protomapList = new ArrayList();
         if (ss.length != 3) {

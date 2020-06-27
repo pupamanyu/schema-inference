@@ -1,19 +1,21 @@
 package com.example.schemainfer.protogen.domain;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 public class SchemaColumnMap {
-    private String schema ;
+    private ObjectNode schema ;
     private String colvalue ;
 
-    public SchemaColumnMap(String schema, String colvalue) {
+    public SchemaColumnMap(ObjectNode schema, String colvalue) {
         this.schema = schema;
         this.colvalue = colvalue;
     }
 
-    public String getSchema() {
+    public ObjectNode getSchema() {
         return schema;
     }
 
-    public void setSchema(String schema) {
+    public void setSchema(ObjectNode schema) {
         this.schema = schema;
     }
 
