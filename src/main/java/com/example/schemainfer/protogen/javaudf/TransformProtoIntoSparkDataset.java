@@ -2,58 +2,68 @@ package com.example.schemainfer.protogen.javaudf;
 
 import com.example.schemainfer.protogen.domain.ProtoLine;
 import com.example.schemainfer.protogen.utils.Constants;
+import com.example.schemainfer.protogen.utils.SchemaInferConfig;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
-import scala.Tuple5;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TransformProtoIntoSparkDataset {
-    private Map<String, List<Tuple5>> outSparkDatasetMap;
-    private StructType protoStructType;
+
+    private static final Logger LOG = LoggerFactory.getLogger(TransformProtoIntoSparkDataset.class);
+
+    private Map<String, List<ProtoLine>> outSparkDatasetMap;
+    private Map<String, List<String>> outProtoTextMap;
     private SparkSession spark;
 
-    public TransformProtoIntoSparkDataset(SparkSession spark, Map<String, List<Tuple5>> outSparkDatasetMap) {
-        this.protoStructType = createStruct();
+    public TransformProtoIntoSparkDataset(SparkSession spark, Map<String, List<ProtoLine>> outSparkDatasetMap, Map<String, List<String>> outProtoTextMap) {
         this.spark = spark;
         this.outSparkDatasetMap = outSparkDatasetMap;
-        writeSpark();
-    }
-
-    private StructType createStruct() {
-        List<org.apache.spark.sql.types.StructField> listOfStructField = new ArrayList<StructField>();
-        listOfStructField.add(DataTypes.createStructField("col0", DataTypes.StringType, true));
-        listOfStructField.add(DataTypes.createStructField("col1", DataTypes.StringType, true));
-        listOfStructField.add(DataTypes.createStructField("col2", DataTypes.StringType, true));
-        listOfStructField.add(DataTypes.createStructField("col3", DataTypes.StringType, true));
-        listOfStructField.add(DataTypes.createStructField("col4", DataTypes.StringType, true));
-        listOfStructField.add(DataTypes.createStructField("col5", DataTypes.StringType, true));
-        StructType structType = DataTypes.createStructType(listOfStructField);
-        // Dataset<Row> data=spark.createDataFrame(list,structType);
-        // data.show();
-        return structType;
+        this.outProtoTextMap = outProtoTextMap ;
+      //  writeSpark();
     }
 
     public void writeSpark() {
 
-        List<ProtoLine> protoListList = new ArrayList<>();
+        List<ProtoLine> protoLineList = new ArrayList<>();
+        List<String> protoTextList = new ArrayList<>();
+        List<Row> rowList = new ArrayList<Row>();
+        String logName = this.spark.logName() ;
+        final String applicationId = spark.sparkContext().applicationId();
 
-        outSparkDatasetMap.entrySet().stream().filter((v1) -> {
+        final List<List<ProtoLine>> listList = outSparkDatasetMap.entrySet().stream().filter((v1) -> {
             return v1 != null;
-        }).forEach(e -> {
-            String fileName = e.getKey();
-            List<Tuple5> tupleList = e.getValue();
-            tupleList.stream().forEach(t -> {
-                ProtoLine protoLine = new ProtoLine(t._1(), t._2(), t._3(), t._4(), t._5());
-                protoListList.add(protoLine);
-            });
+        }).filter(p -> {
+            return p.getValue() != null;
+        }).map(o -> {
+            return o.getValue();
+        }).collect(Collectors.toList());
+
+        listList.stream().forEach(p -> {
+            protoLineList.addAll(p) ;
         });
 
-        Dataset<Row> sparoRows = spark.createDataFrame(protoListList, ProtoLine.class);
-        sparoRows.write().json(Constants.sparkProtoOut);
+        LOG.info("Total ProtoLines : " + protoLineList.size()) ;
+        Dataset<Row> bigqueryRows = spark.createDataFrame(protoLineList, ProtoLine.class);
+
+        LOG.info("Total BigQuery Rows: " + bigqueryRows.count()) ;
+
+        String outbqtable = SchemaInferConfig.getInstance().getOutputBQtableName() ;
+
+        if (!Constants.isLocal) {
+            bigqueryRows.write()
+                    .format("bigquery")
+                 //   .option("temporaryGcsBucket", Constants.gcsTempLocation)
+                    .option("temporaryGcsBucket", SchemaInferConfig.getInstance().getGcsTempBucketName())
+                    .mode(SaveMode.Overwrite)
+                    .save(Constants.BIG_QUERY_DATASET + "." + outbqtable);
+        }
     }
 }

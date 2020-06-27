@@ -2,29 +2,23 @@ package com.example.schemainfer.protogen.functions;
 
 import com.example.schemainfer.protogen.javaudf.Protomap;
 import com.example.schemainfer.protogen.utils.Constants;
-import com.example.schemainfer.protogen.utils.ConvertUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProcessTextColumn2 implements Function<Text, ObjectNode>, Serializable {
-    static final Logger LOG = LoggerFactory.getLogger(ProcessTextColumn2.class);
+public class MapColumnIntoObjectNode implements Function<String, Tuple2<String, ObjectNode>>, Serializable {
+    private static final Logger LOG = LoggerFactory.getLogger(MapColumnIntoObjectNode.class);
 
-    public ProcessTextColumn2() {
+    public MapColumnIntoObjectNode() {
     }
 
-    public ObjectNode call(Text text) throws Exception {
-        String s = ConvertUtils.bytesToString(text.getBytes(), 0, text.getLength());
-        return this.processRow(s);
-    }
-
-    public ObjectNode processRow(String s) {
+    public  ObjectNode processRow(String s) {
         String[] ss = s.split(Constants.SEQUENCE_FIELD_DELIMITER, -1);
         List<Protomap> protomapList = new ArrayList();
         if (ss.length != 3) {
@@ -44,4 +38,11 @@ public class ProcessTextColumn2 implements Function<Text, ObjectNode>, Serializa
         }
     }
 
+
+    @Override
+    public Tuple2<String, ObjectNode> call(String v1) throws Exception {
+        ObjectNode onode = processRow(v1) ;
+        Tuple2 tuple = new Tuple2<>(v1, onode) ;
+        return tuple ;
+    }
 }

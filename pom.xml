@@ -143,56 +143,30 @@
     &lt;!&ndash;      <version>${guava.version}</version>&ndash;&gt;
         </dependency>-->
 
+    <!-- https://mvnrepository.com/artifact/args4j/args4j -->
+    <dependency>
+      <groupId>args4j</groupId>
+      <artifactId>args4j</artifactId>
+      <version>2.33</version>
+    </dependency>
+
+
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.12</artifactId>
       <version>2.4.5</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava-jdk5</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.glassfish.jersey.bundles.repackaged</groupId>
-          <artifactId>jersey-guava</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-sql_2.12</artifactId>
       <version>2.4.5</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava-jdk5</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-hive_2.12</artifactId>
       <version>2.4.5</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava-jdk5</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -205,32 +179,12 @@
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-parsers</artifactId>
       <version>1.24.1</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava-jdk5</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-dl</artifactId>
       <version>1.24.1</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava-jdk5</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->
@@ -274,12 +228,6 @@
       <version>2.11.0</version>
     </dependency>
 
-    <!--    <dependency>
-          <groupId>com.google.code.gson</groupId>
-          <artifactId>gson</artifactId>
-          <version>2.8.6</version>
-        </dependency>-->
-
     <!-- https://mvnrepository.com/artifact/com.google.cloud/google-cloud-storage -->
     <dependency>
       <groupId>com.google.cloud</groupId>
@@ -300,12 +248,5 @@
     </dependencies>
   </dependencyManagement>
 
-
-  <!--  <scm>-->
-  <!--    <url>https://github.com/simplymequeeny/json-string-schema-generator</url>-->
-  <!--    <connection>scm:git:git://github.com/simplymequeeny/json-string-schema-generator.git</connection>-->
-  <!--    <developerConnection>scm:git:git@github.com:simplymequeeny/json-string-schema-generator.git</developerConnection>-->
-  <!--    <tag>HEAD</tag>-->
-  <!--  </scm>-->
 
 </project>

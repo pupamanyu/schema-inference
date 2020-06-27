@@ -63,8 +63,6 @@ public class JsonUtils {
                     JSONObject jsonObj = (JSONObject) oo;
                     derivedMap = processJson(jsonObj, protomapList);
                 } else {
-                     LOG.error("oo not instance of jjSonObj: {}", oo.toString());
-                    LOG.error("jjSonObj from Value: {}", jSonObject.toString());
                     break;
                 }
             }

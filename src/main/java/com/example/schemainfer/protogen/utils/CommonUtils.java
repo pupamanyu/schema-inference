@@ -13,6 +13,9 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.api.java.JavaRDD;
@@ -122,6 +125,18 @@ public class CommonUtils {
         return true;
     }
 
+    private static Map<String, Long> sortMap2(Map<ObjectNode, Long> unSortedMap) {
+        LinkedHashMap<String, Long> reverseSortedMap = new LinkedHashMap<>();
+
+        //Use Comparator.reverseOrder() for reverse ordering
+        unSortedMap.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .forEachOrdered(x -> reverseSortedMap.put(x.getKey().toString(), x.getValue()));
+
+        return reverseSortedMap;
+    }
+
     private static Map<String, Long> sortMap(Map<String, Long> unSortedMap) {
         LinkedHashMap<String, Long> reverseSortedMap = new LinkedHashMap<>();
 
@@ -157,6 +172,22 @@ public class CommonUtils {
         sb.append(subtabs);
         sb.append(" -> ");
         return sb.toString();
+    }
+
+    public static List<SchemaCount> calcDistinctObjectNodesCount2(Map<ObjectNode, Long> objectNodeLongMap, long totalCount) {
+        Map<String, Long> sorttedMap = sortMap2(objectNodeLongMap);
+        List<SchemaCount> schemaCountList = new ArrayList();
+        final List<SchemaCount> schemaCounts = sorttedMap.entrySet().stream().limit(20).map(entry -> {
+            SchemaCount schemaCount = new SchemaCount();
+            schemaCount.setSchema((String) entry.getKey().toString());
+            long thisCount = (Long) entry.getValue();
+            schemaCount.setCount(thisCount);
+            schemaCount.setPercent(calculatePercentage(thisCount, totalCount));
+            schemaCountList.add(schemaCount);
+            return schemaCount;
+        }).collect(Collectors.toList());
+
+        return schemaCounts ;
     }
 
     public static List<SchemaCount> calcDistinctObjectNodesCount(Map<String, Long> objectNodeLongMap, long totalCount) {
