@@ -1,12 +1,7 @@
 package com.example.schemainfer.protogen.functions;
 
 import com.example.schemainfer.protogen.javaudf.Protomap;
-import com.example.schemainfer.protogen.rules.InferDatatype;
-import com.example.schemainfer.protogen.utils.CommonUtils;
 import com.example.schemainfer.protogen.utils.Constants;
-import com.example.schemainfer.protogen.utils.JsonGenUtils;
-import com.example.schemainfer.protogen.utils.JsonUtils;
-import com.example.schemainfer.protogen.utils.Constants.DATATYPES;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,8 +9,6 @@ import java.util.List;
 import org.apache.spark.api.java.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spark_project.guava.collect.HashMultimap;
-import org.spark_project.guava.collect.Multimap;
 
 public class ProcessStringColumnAsObjectNode implements Function<String, ObjectNode>, Serializable {
     private static final Logger LOG = LoggerFactory.getLogger(ProcessStringColumnAsObjectNode.class);

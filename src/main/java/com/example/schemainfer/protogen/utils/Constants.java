@@ -23,11 +23,12 @@ public class Constants {
    // public static String sparkProtoOut = "gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out4";
    // public static String sparkProtoOut = "/Users/rajnish.malik/temp/rt/out4";
 
-    public static String BIG_QUERY_DATASET = "schema_infer" ;
-  //  public static String BIG_QUERY_TABLE = "proto_schema4" ;
+    public static final Integer defaultNumberOfTopSchemas = 10 ;
+
+   // public static String BIG_QUERY_DATASET = "schema_infer" ;
     public static String BIG_QUERY_SAMPLE_SCHEMA = "sample_schema3" ;
 
-    public static String gcsBucketName = "schema-inference-out";
+  //  public static String gcsBucketName = "schema-inference-out";
 
     // View name used in SQL
     public static String registeredViewName = EVENT_TYPE;
@@ -67,9 +68,9 @@ public class Constants {
     public static final String GAME_ENTITIES = GAME_ROOT + "/entities/" ;
 
     public static final String protoLine1 = "syntax proto3" ;
+    public static final String protoJavaPackageName = "com.example.schemainfer.lol.proto" ;
     public static final String protoPackage = GAME_ROOT ;
     public static final String NESTED_PROTO = "SUB-PROTO" ;
     public static final String NESTED_ARRAY_PROTO = "SUB-ARRAY-PROTO" ;
-
 
 }

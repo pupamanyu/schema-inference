@@ -14,6 +14,8 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.validation.Schema;
+
 public class GCSBlobWriter {
 
     private static final Logger LOG = LoggerFactory.getLogger(GCSBlobWriter.class);
@@ -25,17 +27,18 @@ public class GCSBlobWriter {
     //WritableByteChannel writechannel = null;
 
     public GCSBlobWriter(String relativePathtOGcsObject) {
-        System.out.println(" FIle in bucket: " + relativePathtOGcsObject);
+        SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance() ;
+        String gcsBucketName = schemaInferConfig.getOutputBucketName() ;
         try {
            this.storage = StorageOptions.getDefaultInstance().getService();
             if (this.storage == null) {
                 LOG.error("Could not get storage in GCSBlobWriter");
                 return;
             }
-            this.blob = this.storage.get(BlobId.of("schema-inference-out", relativePathtOGcsObject));
+            this.blob = this.storage.get(BlobId.of(gcsBucketName, relativePathtOGcsObject));
             if (blob == null || !blob.exists()) {
                 blob = storage.create(
-                                BlobInfo.newBuilder(Constants.gcsBucketName, relativePathtOGcsObject)
+                                BlobInfo.newBuilder(gcsBucketName, relativePathtOGcsObject)
                                         .setContentType("application/text")
                                         .setAcl(new ArrayList<>(Arrays.asList(Acl.of(Acl.User.ofAllAuthenticatedUsers(), Acl.Role.READER))))
                                         .build());

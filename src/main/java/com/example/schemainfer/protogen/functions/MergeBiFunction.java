@@ -35,6 +35,15 @@ public class MergeBiFunction implements BiFunction<Object, Object, String> {
         if (s1.toString().equalsIgnoreCase("string") ||  s2.toString().equalsIgnoreCase("string")) {
             return "string" ;
         }
+
+        if (s1.toString().equalsIgnoreCase("float") &&  s2.toString().equalsIgnoreCase("double")) {
+            return "double" ;
+        }
+
+        if (s2.toString().equalsIgnoreCase("double") &&  s1.toString().equalsIgnoreCase("float")) {
+            return "double" ;
+        }
+
         return s2.toString();
     }
 
