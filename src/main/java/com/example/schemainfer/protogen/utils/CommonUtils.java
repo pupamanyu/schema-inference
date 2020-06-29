@@ -2,7 +2,7 @@ package com.example.schemainfer.protogen.utils;
 
 import com.example.schemainfer.protogen.domain.SchemaCount;
 import com.example.schemainfer.protogen.javaudf.Protomap;
-import com.example.schemainfer.protogen.rules.InferDatatype;
+import com.example.schemainfer.protogen.rules.InferJsonDatatype;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -13,7 +13,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -91,7 +90,7 @@ public class CommonUtils {
 
     public static boolean isDouble(String input1) {
         // TODO: May be find a better way to determine if this should be a double
-        return InferDatatype.precisionGreatherThan3(input1);
+        return InferJsonDatatype.precisionGreatherThan3(input1);
     }
 
     public static Boolean isBoolean(String instr) {
@@ -230,6 +229,16 @@ public class CommonUtils {
                 .min(Comparator.comparing(Map.Entry::getValue));
         return maxEntry.get()
                 .getKey() ;
+    }
+    public static boolean isLocal() {
+        String mode = SchemaInferConfig.getInstance().getRunMode() ;
+        if (mode == null || mode.isEmpty()) {
+            return false ;
+        }
+        if (mode.equalsIgnoreCase(Constants.RUN_MODE.Local.name())) {
+            return true ;
+        }
+        return false ;
     }
 
     public static Integer findMaxKey(Map<Integer, String> mapGroup) {

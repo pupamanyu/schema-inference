@@ -1,7 +1,7 @@
 package com.example.schemainfer.protogen.functions;
 
 import com.example.schemainfer.protogen.javaudf.Protomap;
-import com.example.schemainfer.protogen.rules.InferDatatype;
+import com.example.schemainfer.protogen.rules.InferJsonDatatype;
 import com.example.schemainfer.protogen.utils.CommonUtils;
 import com.example.schemainfer.protogen.utils.Constants;
 import com.example.schemainfer.protogen.utils.JsonGenUtils;
@@ -79,7 +79,7 @@ public class ProcessColumn {
             sb.append(":");
             if (JsonUtils.isJSONValid(v)) {
                 sb.append(v);
-            } else if (InferDatatype.determineInferDatatype(v) == Constants.DATATYPES.String.name()) {
+            } else if (InferJsonDatatype.determineInferDatatype(v) == Constants.DATATYPES.String.name()) {
                 sb.append("\"");
                 sb.append(v);
                 sb.append("\"");

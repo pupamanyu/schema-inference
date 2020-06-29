@@ -2,7 +2,7 @@ package com.example.schemainfer.protogen.utils;
 
 import com.example.schemainfer.protogen.javaudf.Protomap;
 import com.example.schemainfer.protogen.json.EventJsonSchema;
-import com.example.schemainfer.protogen.rules.InferDatatype;
+import com.example.schemainfer.protogen.rules.InferJsonDatatype;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONException;
 import com.github.openjson.JSONObject;
@@ -118,7 +118,7 @@ public class JsonUtils {
     }
 
     public static void allMainKeyValue(String key, String value, Multimap<String, String> allMap, List<Protomap> protomapList) {
-        String datatype = InferDatatype.determineInferDatatype(value);
+        String datatype = InferJsonDatatype.determineInferDatatype(value);
         allMap.put(key, value);
         Protomap protomap = new Protomap();
         protomap.setKey(key);
@@ -138,7 +138,7 @@ public class JsonUtils {
                 Optional<String> ov = entityValueSet.stream().findFirst();
                 if (ov.isPresent() && ov.get() != null) {
                     valueOfentityKey = ov.get();
-                    datatype = InferDatatype.determineInferDatatype(valueOfentityKey);
+                    datatype = InferJsonDatatype.determineInferDatatype(valueOfentityKey);
                 }
             }
 

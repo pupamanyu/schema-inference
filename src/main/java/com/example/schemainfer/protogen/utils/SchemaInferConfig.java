@@ -6,9 +6,14 @@ public class SchemaInferConfig {
     private String inputFile ;
     private String outputBucketName;
     private String gcsTempBucketName ;
-    private boolean writeSampleDataWIthSchema ;
+    private boolean skipWriteSampleDataWIthSchema;
     private  String outputBQtableName ;
+    private Integer numberOfTopSchemasToMerge ;
+    private String bqdatasetName ;
 
+    public String getBqdatasetName() {
+        return bqdatasetName;
+    }
     public static SchemaInferConfig getConfigInstance() {
         return configInstance;
     }
@@ -29,12 +34,16 @@ public class SchemaInferConfig {
         return gcsTempBucketName;
     }
 
-    public boolean isWriteSampleDataWIthSchema() {
-        return writeSampleDataWIthSchema;
+    public boolean isSkipWriteSampleDataWIthSchema() {
+        return skipWriteSampleDataWIthSchema;
     }
 
     public String getOutputBQtableName() {
         return outputBQtableName;
+    }
+
+    public Integer getNumberOfTopSchemasToMerge() {
+        return numberOfTopSchemasToMerge;
     }
 
     private SchemaInferConfig() {
@@ -49,13 +58,16 @@ public class SchemaInferConfig {
         return configInstance;
     }
 
-    public void build(String runMode, String inputFile, String outputFile, String gcsTempBucketName, String outputBQtableName, boolean writeSampleDataWIthSchema) {
+    public void build(String runMode, String inputFile, String outputFile, String gcsTempBucketName, String outputBQtableName,
+                      boolean writeSampleDataWIthSchema, Integer numberOfTopSchemasToMerge, String bsDatasetName) {
         this.runMode = runMode ;
         this.inputFile = inputFile ;
         this.outputBucketName = outputFile ;
         this.gcsTempBucketName = gcsTempBucketName ;
         this.outputBQtableName = outputBQtableName ;
-        this.writeSampleDataWIthSchema = writeSampleDataWIthSchema ;
+        this.skipWriteSampleDataWIthSchema = writeSampleDataWIthSchema ;
+        this.numberOfTopSchemasToMerge = numberOfTopSchemasToMerge ;
+        this.bqdatasetName = bsDatasetName ;
     }
 
 }

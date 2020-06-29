@@ -1,10 +1,8 @@
 package com.example.schemainfer.protogen.javaudf;
 
 import com.example.schemainfer.protogen.domain.ProtoLine;
-import com.example.schemainfer.protogen.utils.Constants;
-import com.example.schemainfer.protogen.utils.GCSBlobWriter;
-import com.example.schemainfer.protogen.utils.SchemaInferConfig;
-import com.example.schemainfer.protogen.utils.StringUtils;
+import com.example.schemainfer.protogen.rules.InferProtoDatatype;
+import com.example.schemainfer.protogen.utils.*;
 import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +24,8 @@ public class TransformProtobufHierarchy {
     private Map<String, GCSBlobWriter> outGCSProtoFileMap = new HashMap<>();
     private Map<String, List<ProtoLine>> outSparkDatasetMap = new HashMap<>();
     private Map<String, List<String>> outProtoTextMap = new HashMap<>();
-    private boolean isLocal = false ;
+
+    private boolean isLocal = CommonUtils.isLocal() ;
     String applicationId ;
     SparkSession spark ;
 
@@ -100,7 +99,7 @@ public class TransformProtobufHierarchy {
                 }
 
                 String syntaxLine = "syntax \"proto3\"\n" ;
-                addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, null, "syntax", "proto3", null, null, null) ;
+                addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, "P", "syntax", "proto3", null, null, null) ;
                 if (this.isLocal) {
                     printWriter.write(syntaxLine);
                 } else {
@@ -108,7 +107,7 @@ public class TransformProtobufHierarchy {
                 }
 
                 String packaLine = "package " + Constants.GAME_ROOT + "\n" ;
-                addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, "P", "option", "package", Constants.GAME_ROOT, null, null) ;
+                addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, "O", "option", "package", Constants.GAME_ROOT, null, null) ;
                 if (this.isLocal) {
                     printWriter.write(packaLine);
                 } else {
@@ -126,8 +125,8 @@ public class TransformProtobufHierarchy {
                     }
                 }
 
-                String javaPackage = "option java_package = \"com.example.schemainfer.lol.proto\";\n\n" ;
-                addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, "O", "option", "java_package =", "com.example.schemainfer.lol.proto", null, null, null) ;
+                String javaPackage = "option java_package = \"" + Constants.protoJavaPackageName + "\";\n\n" ;
+                addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, "O", "option", "java_package =", Constants.protoJavaPackageName, null, null) ;
                 if (this.isLocal) {
                     printWriter.write(javaPackage);
                 } else {
@@ -383,16 +382,16 @@ public class TransformProtobufHierarchy {
     private String writeColumnsToProtoFile(Integer lineNumber, AtomicInteger i, Map.Entry<String, String> m, String relativeFileName, AtomicInteger protoctr,
                                            PrintWriter printWriter, GCSBlobWriter finalGCSBlobWriter, List<ProtoLine> sparkList,
                                            List<String> textLinesList) {
-        String datatype = m.getValue();
+        String jsondatatype = m.getValue();
         String colName = m.getKey();
-        String transformedDatatype = datatype;
-        if (datatype.equals(Constants.NESTED_PROTO) || datatype.equals(Constants.NESTED_ARRAY_PROTO)) {
+        String transformedDatatype = jsondatatype;
+        if (jsondatatype.equals(Constants.NESTED_PROTO) || jsondatatype.equals(Constants.NESTED_ARRAY_PROTO)) {
             transformedDatatype = Constants.GAME_ENTITIES + StringUtils.capitalize(colName);
             transformedDatatype = StringUtils.replaceStringInString(transformedDatatype, "/", ".");
         }
 
         String col0 = null ;
-        if (datatype.equals(Constants.NESTED_ARRAY_PROTO)) {
+        if (jsondatatype.equals(Constants.NESTED_ARRAY_PROTO)) {
             col0 = "\trepeated " ;
             if (this.isLocal) {
                 printWriter.write(col0);
@@ -402,12 +401,13 @@ public class TransformProtobufHierarchy {
         }
 
         int colNum = i.incrementAndGet() ;
-        String columnLine = "\t" + transformedDatatype + "\t" + colName + "\t = " + colNum + " \n" ;
+        String protoDataype = InferProtoDatatype.matchProtoDatatype(transformedDatatype) ;
+        String columnLine = "\t" + protoDataype + "\t" + colName + "\t = " + colNum + " \n" ;
         if (this.isLocal) {
             printWriter.write(columnLine);
         } else {
             finalGCSBlobWriter.writeToGCS(columnLine);
-            addSparkLine(lineNumber++, sparkList, textLinesList, relativeFileName, "C", col0, transformedDatatype, colName, String.valueOf(colNum), null);
+            addSparkLine(lineNumber++, sparkList, textLinesList, relativeFileName, "C", col0, protoDataype, colName, String.valueOf(colNum), null);
         }
         return colName;
     }

@@ -70,12 +70,17 @@ public class SeqFilesScan {
     @Option(name = "-t", aliases = "--gcstempbucketname", usage = "GCS Bucket Name for temp file(s)", required = true)
     private String gcsTempBucketName;
 
-    @Option(name = "-bq", aliases = "--bigqueryout", usage = "Output BigQuery table name", required = true)
+    @Option(name = "-tb", aliases = "--bigquerytable", usage = "Output BigQuery table name", required = true)
     private String bqouttablename;
 
-    @Option(name = "-s", aliases = "--writesample", usage = "Write sample data to BQ", required = false)
-    private String writeSampleData;
+    @Option(name = "-ds", aliases = "--dataset", usage = "BigQuery destination dataset name", required = true)
+    private String bqdatasetname;
 
+    @Option(name = "-s", aliases = "--writesample", usage = "Skip writing matching sample data to BQ", required = false)
+    private String skipSampleDataMatch;
+
+    @Option(name = "-n", aliases = "--numerOfTopSchemasToMerge", usage = "Number of top schemas to be consider for merge", required = false)
+    private String numberOfTopSchemasToMerge;
 
     public SeqFilesScan() {
     }
@@ -110,11 +115,34 @@ public class SeqFilesScan {
         }
 
         SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance();
+        boolean skipSampleDatawrite = isSkipSampleDatawrite();
+        int numberOfSchemasToCOnsider = getNumberOfTopSchemasToMerge() ;
+        schemaInferConfig.build(this.runmode, this.inputFile, this.outputBucketName, this.gcsTempBucketName, this.bqouttablename, skipSampleDatawrite, numberOfSchemasToCOnsider, this.bqdatasetname);
+    }
+
+    private boolean isSkipSampleDatawrite() {
         boolean skipSampleDatawrite = true ;
-        if (this.writeSampleData == null || this.writeSampleData.isEmpty()) {
+        if (this.skipSampleDataMatch == null || this.skipSampleDataMatch.isEmpty()) {
             skipSampleDatawrite = false ;
+        } else {
+            skipSampleDatawrite = Boolean.parseBoolean(skipSampleDataMatch) ;
         }
-        schemaInferConfig.build(this.runmode, this.inputFile, this.outputBucketName, this.gcsTempBucketName, this.bqouttablename, skipSampleDatawrite);
+        return skipSampleDatawrite;
+    }
+
+    private Integer getNumberOfTopSchemasToMerge() {
+        int numberOfTopSchemas  ;
+        if (this.numberOfTopSchemasToMerge == null || this.numberOfTopSchemasToMerge.isEmpty()) {
+            numberOfTopSchemas = Constants.defaultNumberOfTopSchemas ;
+        } else {
+            try {
+                numberOfTopSchemas = Integer.valueOf(this.numberOfTopSchemasToMerge);
+            } catch (NumberFormatException nbe) {
+                LOG.warn("Arguments of 'number of schemas to be considered for merge' is not a valid integer. Default to application default: " + Constants.defaultNumberOfTopSchemas);
+                numberOfTopSchemas = Constants.defaultNumberOfTopSchemas ;
+            }
+        }
+        return numberOfTopSchemas;
     }
 
     /**
@@ -130,10 +158,10 @@ public class SeqFilesScan {
         if (mode.equalsIgnoreCase(Constants.RUN_MODE.Local.name())) {
             readValuesAsString(spark, sc);
         } else {
-            if (schemaInferConfig.isWriteSampleDataWIthSchema()) {
-                readValuesAsTextWithMatchSampleData(spark, sc);
-            } else {
+            if (schemaInferConfig.isSkipWriteSampleDataWIthSchema()) {
                 readValuesAsText2(spark, sc);
+            } else {
+                readValuesAsTextWithMatchSampleData(spark, sc);
             }
         }
     }
@@ -183,13 +211,14 @@ public class SeqFilesScan {
         dataSet1.printSchema();
         LOG.info("GOT top schema data: " + dataSet1.count());
         dataSet1.show();
+        String datasetname = SchemaInferConfig.getInstance().getBqdatasetName() ;
 
         if (!Constants.isLocal) {
             dataSet1.write()
                     .format("bigquery")
                     .option("temporaryGcsBucket", SchemaInferConfig.getInstance().getGcsTempBucketName())
                     .mode(SaveMode.Overwrite)
-                    .save(Constants.BIG_QUERY_DATASET + "." + Constants.BIG_QUERY_SAMPLE_SCHEMA);
+                    .save(datasetname + "." + Constants.BIG_QUERY_SAMPLE_SCHEMA);
         }
     }
 
@@ -223,7 +252,7 @@ public class SeqFilesScan {
         Long totalCount = parsedRDD.count();
         LOG.info("Parsed RDD count: " + totalCount);
 
-        LOG.info("Starting processTransformations with No sample data") ;
+        LOG.info("Starting processTransformations without writing sample data") ;
         Map<ObjectNode, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
             return v1;
         }).countByValue();
@@ -263,9 +292,10 @@ public class SeqFilesScan {
         }
         EventJsonSchema topSchema = distinctSchemaList.get(0);
         EventJsonSchema mergedTopSchema = topSchema;
+        int numberOfSchemasToConsiderForMerge = SchemaInferConfig.getInstance().getNumberOfTopSchemasToMerge() ;
 
         for (int i = 1; i < distinctSchemaList.size(); i++) {
-            if (i > 10) {
+            if (i > numberOfSchemasToConsiderForMerge) {
                 break;
             }
             final EventJsonSchema comparedJsonSchema = CompareSchemas.compareTwoSchemas(mergedTopSchema, distinctSchemaList.get(i));
@@ -291,7 +321,7 @@ public class SeqFilesScan {
             }
         }, DataTypes.StringType);
 
-        // spark.sql("SELECT JSCHEMA(schema) AS jsonschema FROM gameevent").show();
+        spark.sql("SELECT JSCHEMA(schema) AS jsonschema FROM gameevent").show();
     }
 
     private static JavaRDD<ObjectNode> transformFValueIntoProromap31(JavaRDD<Text> values) {
@@ -329,7 +359,6 @@ public class SeqFilesScan {
                 distinctSchemaList.add(eventJsonSchema);
             }
         }
-
         return distinctSchemaList;
     }
 

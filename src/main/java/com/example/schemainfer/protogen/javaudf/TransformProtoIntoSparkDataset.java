@@ -55,7 +55,9 @@ public class TransformProtoIntoSparkDataset {
 
         LOG.info("Total BigQuery Rows: " + bigqueryRows.count()) ;
 
-        String outbqtable = SchemaInferConfig.getInstance().getOutputBQtableName() ;
+        SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance() ;
+        String outbqtable = schemaInferConfig.getOutputBQtableName() ;
+        String outbqdataset = schemaInferConfig.getBqdatasetName() ;
 
         if (!Constants.isLocal) {
             bigqueryRows.write()
@@ -63,7 +65,7 @@ public class TransformProtoIntoSparkDataset {
                  //   .option("temporaryGcsBucket", Constants.gcsTempLocation)
                     .option("temporaryGcsBucket", SchemaInferConfig.getInstance().getGcsTempBucketName())
                     .mode(SaveMode.Overwrite)
-                    .save(Constants.BIG_QUERY_DATASET + "." + outbqtable);
+                    .save(outbqdataset + "." + outbqtable);
         }
     }
 }
