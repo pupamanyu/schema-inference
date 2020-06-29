@@ -1,7 +1,7 @@
 package com.example.schemainfer.protogen.javaudf;
 
 
-import com.example.schemainfer.protogen.rules.InferDatatype;
+import com.example.schemainfer.protogen.rules.InferJsonDatatype;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.example.schemainfer.protogen.utils.CommonUtils;
@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.Test ;
 
 class DataTypesTest {
@@ -34,11 +33,11 @@ class DataTypesTest {
 
     @Test
     void testPrecision() throws IOException {
-        assertTrue(InferDatatype.precisionGreatherThan3("20.44567567"));
-        assertTrue(InferDatatype.precisionGreatherThan3("1923232.4456"));
-        assertFalse(InferDatatype.precisionGreatherThan3("202497397395454.444"));
-        assertFalse(InferDatatype.precisionGreatherThan3("20.1"));
-        assertFalse(InferDatatype.precisionGreatherThan3("20"));
+        assertTrue(InferJsonDatatype.precisionGreatherThan3("20.44567567"));
+        assertTrue(InferJsonDatatype.precisionGreatherThan3("1923232.4456"));
+        assertFalse(InferJsonDatatype.precisionGreatherThan3("202497397395454.444"));
+        assertFalse(InferJsonDatatype.precisionGreatherThan3("20.1"));
+        assertFalse(InferJsonDatatype.precisionGreatherThan3("20"));
 
         assertTrue(CommonUtils.isDouble("20.44567567"));
         assertTrue(CommonUtils.isDouble("1923232.4456"));
@@ -53,7 +52,7 @@ class DataTypesTest {
     @Test
     void testDatatype() throws IOException {
         String s = "9283493.23353453" ;
-        String ss = InferDatatype.determineInferDatatype(s);
+        String ss = InferJsonDatatype.determineInferDatatype(s);
         System.out.println("Got datatype for: " + s + " datatype: " + ss) ;
     }
 
