@@ -17,6 +17,7 @@ gsutil cp ./target/$JAR_NAME $GCS_JAR_ARTIFACT_BUCKET
 
 gcloud dataproc jobs submit spark \
 --cluster $CLUSTER_NAME  \
+--properties spark:spark.executor.memory=64g \
 --jars gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar \
 --region $REGION_NAME \
 --jar $GCS_JAR_ARTIFACT_BUCKET/$JAR_NAME \
