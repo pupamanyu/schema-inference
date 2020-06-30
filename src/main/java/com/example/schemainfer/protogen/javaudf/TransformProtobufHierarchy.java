@@ -40,6 +40,7 @@ public class TransformProtobufHierarchy {
     public void generate() {
         this.isLocal = Constants.isLocal;
         LOG.info("** Input keyHierarchy: " + inProtoMap.toString());
+        createMetadataFileWriter() ;
         checkShortProtoMap();
         checkShortProtoMap(); // delibratly called twice to take care of elements could be in different order
         printShortProtoMap();
@@ -253,7 +254,7 @@ public class TransformProtobufHierarchy {
     }
 
     private String getShortProtoname(String longProtoName) {
-        String shortName = longProtoName.replaceFirst("additionalproperties/", "");
+        String shortName = longProtoName.replaceFirst(Constants.ADDITIONAL_PROPERTIES_TYPE, "");
         if (shortName.isEmpty()) {
             shortName = Constants.EVENT_TYPE;
         }
@@ -295,17 +296,33 @@ public class TransformProtobufHierarchy {
         }
     }
 
+    private void createMetadataFileWriter() {
+       // String protoKey = "additionalproperties/metadata/" ;
+        String protoKey = Constants.ADDITIONAL_PROPERTIES_TYPE + Constants.METADATA_TYPE + "/" ;
+        Map<String, String> metadataColMap = new HashMap<>() ;
+        metadataColMap.put("ts", "integer") ;
+        metadataColMap.put("hostname", "string") ;
+        metadataColMap.put("dt", "string") ;
+        metadataColMap.put("h", "string") ;
+        this.inProtoMap.put(protoKey, metadataColMap) ;
+
+        String metadataFileName = Constants.localProtoFileLocation + "metadata.proto";
+        GCSBlobWriter gcsBlobWriter = new GCSBlobWriter(metadataFileName);
+        outGCSProtoFileMap.put(protoKey, gcsBlobWriter);
+
+    }
+
     private String determineProtoFileName(String longProtoName, boolean isLocal) {
         String fileName;
         String shortProtoName = getShortProtoname(longProtoName);
         if (isLocal) {
-            if (shortProtoName.equalsIgnoreCase(Constants.EVENT_TYPE)) {
+            if (shortProtoName.equalsIgnoreCase(Constants.EVENT_TYPE) || shortProtoName.equalsIgnoreCase(Constants.METADATA_TYPE)) {
                 fileName = Constants.localProtoFileLocation + shortProtoName + ".proto";
             } else {
                 fileName = Constants.localProtoFileLocation + Constants.GAME_ENTITIES + shortProtoName + ".proto";
             }
         } else {
-            if (shortProtoName.equalsIgnoreCase(Constants.EVENT_TYPE)) {
+            if (shortProtoName.equalsIgnoreCase(Constants.EVENT_TYPE) || shortProtoName.equalsIgnoreCase(Constants.METADATA_TYPE)) {
               //  fileName = Constants.gcsProtoLocation + shortProtoName + ".proto";
                 fileName = SchemaInferConfig.getInstance().getOutputBucketName() + shortProtoName + ".proto";
             } else {
@@ -320,9 +337,9 @@ public class TransformProtobufHierarchy {
         String fileName;
         String shortProtoName = getShortProtoname(longProtoName);
         if (shortProtoName.equalsIgnoreCase(Constants.EVENT_TYPE)) {
-            fileName = "protos/" + shortProtoName + ".proto";
+            fileName = Constants.PROTO_FOLDER_NAME + shortProtoName + ".proto";
         } else {
-            fileName = "protos/" + Constants.GAME_ENTITIES + shortProtoName + ".proto";
+            fileName = Constants.PROTO_FOLDER_NAME + Constants.GAME_ENTITIES + shortProtoName + ".proto";
         }
         return fileName;
     }
@@ -373,8 +390,13 @@ public class TransformProtobufHierarchy {
         String importProto = null;
 
         if (datatype.equals(Constants.NESTED_PROTO) || datatype.equals(Constants.NESTED_ARRAY_PROTO)) {
-            importProto = Constants.GAME_ENTITIES + colName + ".proto";
-            importProtosList.add(importProto);
+            String importedProtoName = Constants.ADDITIONAL_PROPERTIES_TYPE + colName + "/";
+            if (!inProtoMap.containsKey(importedProtoName)) {
+                LOG.warn("EMPTY IMPORT: " + importedProtoName) ;
+            } else {
+                importProto = Constants.GAME_ENTITIES + colName + ".proto";
+                importProtosList.add(importProto);
+            }
         }
         return importProtosList;
     }
@@ -386,6 +408,12 @@ public class TransformProtobufHierarchy {
         String colName = m.getKey();
         String transformedDatatype = jsondatatype;
         if (jsondatatype.equals(Constants.NESTED_PROTO) || jsondatatype.equals(Constants.NESTED_ARRAY_PROTO)) {
+            String importedProtoName = Constants.ADDITIONAL_PROPERTIES_TYPE + colName + "/";
+            if (!inProtoMap.containsKey(importedProtoName)) {
+                LOG.warn("EMPTY Column: " + importedProtoName) ;
+                return colName;
+            }
+
             transformedDatatype = Constants.GAME_ENTITIES + StringUtils.capitalize(colName);
             transformedDatatype = StringUtils.replaceStringInString(transformedDatatype, "/", ".");
         }

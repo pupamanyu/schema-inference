@@ -24,7 +24,6 @@ public class InferProtoDatatype {
                 returnProtoType = "float" ;
                 break;
             default:
-
         }
 
         return returnProtoType ;

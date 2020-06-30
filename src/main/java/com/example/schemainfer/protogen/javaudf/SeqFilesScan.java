@@ -192,6 +192,7 @@ public class SeqFilesScan {
         LOG.info("Values: " + values.toDebugString());
         LOG.info("Count of values: " + rdd.values().count());
         JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap31(values);
+        LOG.info("Finished Transforming data to ObjectNode: " + parsedRDD.count());
         processTransformations(spark, parsedRDD);
     }
 
@@ -281,9 +282,13 @@ public class SeqFilesScan {
         Dataset<Row> dataset = spark.createDataFrame(schemaCountList, SchemaCount.class);
         dataset.createOrReplaceTempView(Constants.registeredViewName);
         dataset.printSchema();
-        //////// dataset.show(5);
-        //////// dataset.write().json(Constants.outputFile);
+      /////  dataset.show(5);
+      /////  dataset.write().json(Constants.outputFileJson);
 
+        return getEventJsonSchemaFromJson(dataset);
+    }
+
+    public static EventJsonSchema getEventJsonSchemaFromJson(Dataset<Row> dataset) {
         List<EventJsonSchema> distinctSchemaList = getSchemaColumnDataset(dataset);
         List<EventJsonSchema> mergedSchemaList = new ArrayList<>();
         if (distinctSchemaList == null || distinctSchemaList.size() == 0) {

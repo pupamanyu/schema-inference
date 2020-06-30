@@ -5,30 +5,17 @@ import java.nio.charset.Charset;
 public class Constants {
 
     public static String EVENT_TYPE = "gameevent" ;
-    // Path to input SEQ files. Hard coded for now...
+    public static String METADATA_TYPE = "metadata" ;
+    public static String ADDITIONAL_PROPERTIES_TYPE = "additionalproperties/" ;
 
-    public static boolean isLocal = false ;
+    public static boolean isLocal = true ;
 
     public static String localProtoFileLocation = "/Users/rajnish.malik/temp/rt/protout/";
-//    public static String gcsProtoLocation = "gs://schema-inference-out/protos2/";
-//    public static String gcsTempLocation2 = "dataproc-temp-us-central1-21673414111-z46je66v" ;
-//    public static String gcsTempLocation = "schema-inference-out" ;
-
-   // public static String inputFile = "gs://schema-inference-sample-data/internal__legs_gameevents/dt=2020-05-15/h=06/batchid=190936cc-84d9-45f9-af54-81de9f460ee2/000000_0";
-   //public static String inputFile = "/Users/rajnish.malik/temp/rt/h1.txt";
-
-   //public static String outputFile = "gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out3";
-   // public static String outputFile = "/Users/rajnish.malik/temp/rt/h1.out";
-
-   // public static String sparkProtoOut = "gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out4";
-   // public static String sparkProtoOut = "/Users/rajnish.malik/temp/rt/out4";
+    public static String outputFileJson = "gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out3";
 
     public static final Integer defaultNumberOfTopSchemas = 10 ;
 
-   // public static String BIG_QUERY_DATASET = "schema_infer" ;
     public static String BIG_QUERY_SAMPLE_SCHEMA = "sample_schema3" ;
-
-  //  public static String gcsBucketName = "schema-inference-out";
 
     // View name used in SQL
     public static String registeredViewName = EVENT_TYPE;
@@ -65,6 +52,7 @@ public class Constants {
     }
 
     public static final String GAME_ROOT = "lol" ;
+    public static final String PROTO_FOLDER_NAME = "protos3/" ;
     public static final String GAME_ENTITIES = GAME_ROOT + "/entities/" ;
 
     public static final String protoLine1 = "syntax proto3" ;

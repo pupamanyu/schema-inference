@@ -48,7 +48,6 @@ public class GenerateProtobufHierarchy {
 
     private void checkTheProto(Map<Integer, String> iterKeyMap, String key, Object obj, Integer i) {
         Integer j = i + 1;
-        // System.out.println(CommonUtils.printTabs(i) + "\tkey:" + key + "\t valueclass:" + obj.getClass() + "\tvalue --> " + obj.toString()) ;
         Map<Integer, String> iterKeyMapNew = new HashMap<>(iterKeyMap);
         if (obj instanceof Map) {
             if (!key.equalsIgnoreCase("properties")) {
@@ -56,7 +55,6 @@ public class GenerateProtobufHierarchy {
                 final String protoName = determineProtoName(iterKeyMapNew, obj);
                 storeProto(protoName);
             }
-
             checkProtosRecursevely((Map<String, Object>) obj, j, iterKeyMapNew);
         } else {
             iterKeyMapNew.remove(i - 1);
@@ -111,13 +109,11 @@ public class GenerateProtobufHierarchy {
                 iterKeyMapNew.put(i, key);
                 determineDatatypeForNonColumn(iterKeyMapNew, obj);
                 String protoName = determineProtoName(iterKeyMapNew, obj);
-                // System.out.println(CommonUtils.printTabs(i) + "\t Got protoName: " + protoName + "\t for attribute: " + key + "\t iterKeyMapNew --> " + iterKeyMapNew.toString()) ;
                 LOG.info(CommonUtils.printTabs(i) + " Got protoName: {} \t for attribute: {} \t iterKeyMapNew --> {}", protoName, key, iterKeyMapNew.toString());
             }
             checkRecursively((Map<String, Object>) obj, j, iterKeyMapNew);
         } else {
             convertIt(key, obj, i, iterKeyMapNew);
-
             iterKeyMapNew.remove(i - 1);
             iterKeyMapNew.remove(i);
         }
@@ -133,7 +129,6 @@ public class GenerateProtobufHierarchy {
                 String protoName = determineProtoNameForColumn(iterKeyMap);
                 storeColumnInProto(protoName, colName, Constants.NESTED_ARRAY_PROTO);
             }
-            System.out.println("Got array it seems") ;
         } else {
             determineDatatypeForColumn(iterKeyMap, obj);
         }
@@ -162,8 +157,6 @@ public class GenerateProtobufHierarchy {
         String protoName = determineProtoName(iterKeyMap, obj);
         ;
         String datatype = null;
-        //protoName = protoName + "/" ;
-
         String ss = colName + "/";
         if (ss.equalsIgnoreCase(protoName)) {
             return;
