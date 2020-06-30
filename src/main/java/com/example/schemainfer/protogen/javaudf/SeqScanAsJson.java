@@ -1,84 +1,82 @@
 package com.example.schemainfer.protogen.javaudf;
 
+import com.example.schemainfer.protogen.json.EventJsonSchema;
+import com.example.schemainfer.protogen.utils.Constants;
+import com.example.schemainfer.protogen.utils.SchemaInferConfig;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructType;
-import scala.xml.Source;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import java.util.Map;
 
 public class SeqScanAsJson {
-    private static String inputFile = "data/json/legs_gameevent.json";
+ //   private static String inputFile = "data/distinct/part-00003-55119ac7-2bd7-4974-88b5-3d4d50b2d636-c000.json";
+  private static String inputFile = "data/distinct/";
     private static String registeredViewName = "gameevent";
+    private static final Logger LOG = LoggerFactory.getLogger(SeqFilesScan.class);
+    private String runmode;
+
 
     public static void mainn(String[] args) throws IOException {
 
-        SparkConf conf = new SparkConf().setAppName("Java UDF Example").setMaster("local");
-        SparkSession spark = SparkSession.builder().config(conf).getOrCreate();
-
-        String schema = getSchemaFromFile();
-        readDataFileAsJson(spark, schema);
-
-        // Register the UDF with our SparkSession
-        spark.udf().register("CTOF", new UDF1<String, String>() {
-            @Override
-            public String call(String inStr) {
-                return ("Helloooo: " + inStr);
-            }
-        }, DataTypes.StringType);
-
-          spark.sql("SELECT CTOF(platformId) AS pschema FROM gameevent").show();
+        SeqScanAsJson seqFilesScan = new SeqScanAsJson();
+        seqFilesScan.doSparkMain();
+        LOG.info("Finished ScanSeq");
     }
 
-    private static void readDataFileAsJson(SparkSession spark, String schema) {
+    private  void doSparkMain() {
+        SparkConf conf = getSparkConf("local");
+        JavaSparkContext sc = new JavaSparkContext(conf);
+        SparkSession spark = SparkSession.builder().config(conf).getOrCreate();
+        SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance() ;
+        schemaInferConfig.build(Constants.RUN_MODE.Local.name(), null, null, null, null, true, 20,  null);
 
-        StructType ss = (StructType) StructType.fromJson(schema);
+        final Dataset<Row> rowJavaRDD = readDataFileAsJson(spark);
+        convertRDDIntoString(rowJavaRDD, spark) ;
+    }
+
+    private  void convertRDDIntoString( Dataset<Row> rowJavaRDD, SparkSession spark) {
+        final EventJsonSchema mergedTopSchema = SeqFilesScan.getEventJsonSchemaFromJson(rowJavaRDD);
+
+        GenerateProtobufHierarchy newSchemaGen = new GenerateProtobufHierarchy(mergedTopSchema);
+        Map<String, Map<String, String>> protoHierarchy = newSchemaGen.generate();
+        TransformProtobufHierarchy transformProtobufHierarchy = new TransformProtobufHierarchy(spark, protoHierarchy);
+        transformProtobufHierarchy.generate();
+    }
+
+    private static SparkConf getSparkConf(String mode) {
+        LOG.info("Mode = " + mode);
+        SparkConf conf = new SparkConf()
+                .setAppName("Parse Seq UDF")
+                .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+        if (mode.equalsIgnoreCase(Constants.RUN_MODE.Local.name())) {
+            conf.setMaster("local[2]").set("spark.driver.host", "localhost");
+        } else {
+            conf.setMaster("yarn").set("spark.eventLog.enabled", "true");
+        }
+        return conf;
+    }
+
+    private Dataset<Row> readDataFileAsJson(SparkSession spark) {
+
+     //   StructType ss = (StructType) StructType.fromJson(schema);
         Dataset<Row> ds = spark.read()
-                .option("multiline", "true")
-                .option("mode", "FAILFAST")
                    .option("inferSchema", true)
-                //  .option("badRecordsPath", "~/temp/badRecordsPath")
-                //  .option("mode", "DROPMALFORMED")
-                .schema(ss)
                 .json(inputFile);
-        ds.createOrReplaceTempView(registeredViewName);
         ds.printSchema();
         ds.show();
-    }
-
-    private static void deriveSchema(Dataset<Row> ds) {
-        StructType structType = ds.schema();
-        String prettyJsonSchema = ds.schema().prettyJson();
-        System.out.println("SchemaString:" + structType.toString());
-    }
-
-    private static String getSchemaFromFile() throws IOException {
-        URL schemaURL = ClassLoader.getSystemResource("schema.json");
-        InputStream inputstream = Source.fromFile(schemaURL.getFile()).getByteStream();
-        byte[] data = new byte[1024];
-        int bytesRead = inputstream.read(data);
-        StringBuffer schemaBuff = new StringBuffer();
-
-        while (bytesRead != -1) {
-            String s = new String(data);
-            schemaBuff.append(s);
-            bytesRead = inputstream.read(data);
-        }
-        inputstream.close();
-        return schemaBuff.toString();
+        System.out.println("Json data count: " + ds.count()) ;
+       // final Dataset<String> schemadataset = ds.select("schema").as(Encoders.STRING());
+        return ds.select("schema");
     }
 
 
-    private static void readFileAsText(SparkSession spark) {
-        Dataset<Row> ds = spark.read().text(inputFile);
-        ds.createOrReplaceTempView(registeredViewName);
-        //  System.out.println("COLUMN value: " + ds.col("value").toString()) ;
-        ds.show();
-    }
+
+
 }

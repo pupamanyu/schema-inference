@@ -62,7 +62,6 @@ public class TransformProtoIntoSparkDataset {
         if (!Constants.isLocal) {
             bigqueryRows.write()
                     .format("bigquery")
-                 //   .option("temporaryGcsBucket", Constants.gcsTempLocation)
                     .option("temporaryGcsBucket", SchemaInferConfig.getInstance().getGcsTempBucketName())
                     .mode(SaveMode.Overwrite)
                     .save(outbqdataset + "." + outbqtable);

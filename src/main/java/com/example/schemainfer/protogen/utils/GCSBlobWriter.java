@@ -1,20 +1,15 @@
 package com.example.schemainfer.protogen.utils;
 
 
-import com.google.cloud.WriteChannel;
 import com.google.cloud.storage.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.xml.validation.Schema;
 
 public class GCSBlobWriter {
 
@@ -24,7 +19,6 @@ public class GCSBlobWriter {
 
     Blob blob = null;
     Storage storage = null;
-    //WritableByteChannel writechannel = null;
 
     public GCSBlobWriter(String relativePathtOGcsObject) {
         SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance() ;
