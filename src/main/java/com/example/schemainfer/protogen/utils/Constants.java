@@ -8,9 +8,9 @@ public class Constants {
     public static String METADATA_TYPE = "metadata" ;
     public static String ADDITIONAL_PROPERTIES_TYPE = "additionalproperties/" ;
 
-    public static boolean isLocal = true ;
+    public static boolean isLocal = false ;
 
-    public static String localProtoFileLocation = "/Users/rajnish.malik/temp/rt/protout/";
+    public static String localProtoFileLocation = "/Users/rajnish.malik/temp/rt/protout2/";
     public static String outputFileJson = "gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out3";
 
     public static final Integer defaultNumberOfTopSchemas = 10 ;

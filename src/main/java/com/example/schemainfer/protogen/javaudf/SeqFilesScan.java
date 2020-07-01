@@ -28,6 +28,7 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -245,7 +246,7 @@ public class SeqFilesScan {
 
         processSchemaColMapDF(rowDataset);
 
-        postProcessAfterDistinctForSchemaMap(spark, parsedRDD, totalCount);
+        ////////postProcessAfterDistinctForSchemaMap(spark, parsedRDD, totalCount);
     }
 
     private static void processTransformations(SparkSession spark, JavaRDD<ObjectNode> parsedRDD) {
@@ -254,14 +255,29 @@ public class SeqFilesScan {
         LOG.info("Parsed RDD count: " + totalCount);
 
         LOG.info("Starting processTransformations without writing sample data") ;
-        Map<ObjectNode, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
-            return v1;
-        }).countByValue();
+       // Map<ObjectNode, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
+        //    return v1;
+       // }).countByValue();
+
+        Map<ObjectNode, Integer> objectNodeLongMap = countDistinctObjectNodes(parsedRDD) ;
 
         findDistinctAndPersist(spark, totalCount, objectNodeLongMap);
     }
 
-    private static void findDistinctAndPersist(SparkSession spark, Long totalCount, Map<ObjectNode, Long> objectNodeLongMap) {
+    public static Map<ObjectNode, Integer> countDistinctObjectNodes(JavaRDD<ObjectNode> data) {
+
+        JavaPairRDD<ObjectNode, Integer> ones = data
+                .mapToPair(s -> new Tuple2<>(s, 1));
+       // JavaPairRDD<ObjectNode, Long> counts = ones.reduceByKey((i1, i2) -> (i1 + i2)l);
+        JavaPairRDD<ObjectNode, Integer> counts = ones.reduceByKey((i1, i2) -> {
+           return  (i1 + i2) ;
+          //  return i.longValue();
+        }, 10);
+
+        return counts.collectAsMap();
+    }
+
+    private static void findDistinctAndPersist(SparkSession spark, Long totalCount, Map<ObjectNode, Integer> objectNodeLongMap) {
         LOG.info("Distinct RDD count value " + objectNodeLongMap.size());
         List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount2(objectNodeLongMap, totalCount);
         EventJsonSchema mergedTopSchema = convertSchemaCountRDDtoDataset(spark, schemaCountList);
@@ -271,12 +287,13 @@ public class SeqFilesScan {
         transformProtobufHierarchy.generate();
     }
 
+    /*
     private static void postProcessAfterDistinctForSchemaMap(SparkSession spark, JavaRDD<SchemaColumnMap> parsedRDD, Long totalCount) {
         Map<ObjectNode, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
             return v1.getSchema();
         }).countByValue();
         findDistinctAndPersist(spark, totalCount, objectNodeLongMap);
-    }
+    } */
 
     private static EventJsonSchema convertSchemaCountRDDtoDataset(SparkSession spark, List<SchemaCount> schemaCountList) {
         Dataset<Row> dataset = spark.createDataFrame(schemaCountList, SchemaCount.class);
