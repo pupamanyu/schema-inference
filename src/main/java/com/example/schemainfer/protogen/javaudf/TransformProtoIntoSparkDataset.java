@@ -37,12 +37,18 @@ public class TransformProtoIntoSparkDataset {
         List<Row> rowList = new ArrayList<Row>();
         String logName = this.spark.logName() ;
         final String applicationId = spark.sparkContext().applicationId();
+        String outputBucketName = SchemaInferConfig.getInstance().getOutputBucketName() ;
+        String path = "protodf" ;
 
         final List<List<ProtoLine>> listList = outSparkDatasetMap.entrySet().stream().filter((v1) -> {
             return v1 != null;
         }).filter(p -> {
             return p.getValue() != null;
         }).map(o -> {
+            String protoName = o.getKey() ;
+            String gspath = "gs://" + outputBucketName + path + "/" + protoName + "/" +  protoName + ".proto" ;
+            Dataset<Row> sparkrows = spark.createDataFrame(o.getValue(), ProtoLine.class);
+            sparkrows.write().format("txt").save(gspath) ;
             return o.getValue();
         }).collect(Collectors.toList());
 
@@ -65,6 +71,8 @@ public class TransformProtoIntoSparkDataset {
                     .option("temporaryGcsBucket", SchemaInferConfig.getInstance().getGcsTempBucketName())
                     .mode(SaveMode.Overwrite)
                     .save(outbqdataset + "." + outbqtable);
+
+
         }
     }
 }

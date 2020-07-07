@@ -83,6 +83,9 @@ public class SeqFilesScan {
     @Option(name = "-n", aliases = "--numerOfTopSchemasToMerge", usage = "Number of top schemas to be consider for merge", required = false)
     private String numberOfTopSchemasToMerge;
 
+    @Option(name = "-pa", aliases = "--numberOfPartitions", usage = "Number of Partitions for repartitioning", required = false)
+    private String numberOfPartitions ;
+
     public SeqFilesScan() {
     }
 
@@ -118,7 +121,8 @@ public class SeqFilesScan {
         SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance();
         boolean skipSampleDatawrite = isSkipSampleDatawrite();
         int numberOfSchemasToCOnsider = getNumberOfTopSchemasToMerge() ;
-        schemaInferConfig.build(this.runmode, this.inputFile, this.outputBucketName, this.gcsTempBucketName, this.bqouttablename, skipSampleDatawrite, numberOfSchemasToCOnsider, this.bqdatasetname);
+        int numOfPartitions = getNumberOfPartitions() ;
+        schemaInferConfig.build(this.runmode, this.inputFile, this.outputBucketName, this.gcsTempBucketName, this.bqouttablename, skipSampleDatawrite, numberOfSchemasToCOnsider, this.bqdatasetname, numOfPartitions);
     }
 
     private boolean isSkipSampleDatawrite() {
@@ -144,6 +148,21 @@ public class SeqFilesScan {
             }
         }
         return numberOfTopSchemas;
+    }
+
+    private Integer getNumberOfPartitions() {
+        int numberOfPartitions  ;
+        if (this.numberOfPartitions == null || this.numberOfPartitions.isEmpty()) {
+            numberOfPartitions = 0 ;
+        } else {
+            try {
+                numberOfPartitions = Integer.valueOf(this.numberOfPartitions);
+            } catch (NumberFormatException nbe) {
+                LOG.warn("Arguments of 'number of schemas to be considered for merge' is not a valid integer. Default to application default: " + Constants.defaultNumberOfTopSchemas);
+                numberOfPartitions = 0 ;
+            }
+        }
+        return numberOfPartitions;
     }
 
     /**
@@ -192,7 +211,15 @@ public class SeqFilesScan {
         JavaRDD<Text> values = rdd.values();
         LOG.info("Values: " + values.toDebugString());
         LOG.info("Count of values: " + rdd.values().count());
-        JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap31(values);
+        int numOfPartitions = SchemaInferConfig.getInstance().getNumberOfPartitions() ;
+        JavaPairRDD<BytesWritable, Text> pairedRDD ;
+        if (numOfPartitions > 0) {
+            pairedRDD = rdd.repartition(numOfPartitions);
+        } else {
+            pairedRDD = rdd ;
+        }
+
+        JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap31(pairedRDD.values());
         LOG.info("Finished Transforming data to ObjectNode: " + parsedRDD.count());
         processTransformations(spark, parsedRDD);
     }

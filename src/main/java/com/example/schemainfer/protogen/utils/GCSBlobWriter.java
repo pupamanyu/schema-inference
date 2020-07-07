@@ -1,7 +1,7 @@
 package com.example.schemainfer.protogen.utils;
 
 
-import com.google.cloud.storage.*;
+//import com.google.cloud.storage.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,11 +17,11 @@ public class GCSBlobWriter {
 
     WritableByteChannel writerChannel = null;
 
-    Blob blob = null;
-    Storage storage = null;
+    //Blob blob = null;
+   // Storage storage = null;
 
     public GCSBlobWriter(String relativePathtOGcsObject) {
-        SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance() ;
+/*        SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance() ;
         String gcsBucketName = schemaInferConfig.getOutputBucketName() ;
         try {
            this.storage = StorageOptions.getDefaultInstance().getService();
@@ -42,7 +42,7 @@ public class GCSBlobWriter {
         } catch (Throwable e) {
             LOG.error("Error opening channel to GCS in GCSBlobWriter: " + e.getMessage());
             e.printStackTrace();
-        }
+        }*/
     }
 
 
@@ -51,7 +51,7 @@ public class GCSBlobWriter {
     }
 
     public void write(String relativePathtOGcsObject) {
-        if (writerChannel == null) {
+/*        if (writerChannel == null) {
             LOG.error("writerChannel is null in GCSBlobWriter");
             return;
         }
@@ -60,7 +60,7 @@ public class GCSBlobWriter {
             writerChannel.write(ByteBuffer.wrap(ssBytes));
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     public WritableByteChannel getWriterChannel() {
