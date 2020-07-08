@@ -210,7 +210,8 @@ public class SeqFilesScan {
         LOG.info("RDD out: " + rdd.toString());
         JavaRDD<Text> values = rdd.values();
         LOG.info("Values: " + values.toDebugString());
-        LOG.info("Count of values: " + rdd.values().count());
+       // LOG.info("Count of values: " + rdd.values().count());
+        LOG.info("Count of #Partitions: " + rdd.getNumPartitions()) ;
         int numOfPartitions = SchemaInferConfig.getInstance().getNumberOfPartitions() ;
         JavaPairRDD<BytesWritable, Text> pairedRDD ;
         if (numOfPartitions > 0) {
@@ -218,6 +219,7 @@ public class SeqFilesScan {
         } else {
             pairedRDD = rdd ;
         }
+        LOG.info("Count of #Partitions AFTER: " + pairedRDD.getNumPartitions()) ;
 
         JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap31(pairedRDD.values());
         LOG.info("Finished Transforming data to ObjectNode: " + parsedRDD.count());

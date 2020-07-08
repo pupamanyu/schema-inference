@@ -3,10 +3,7 @@ package com.example.schemainfer.protogen.javaudf;
 import com.example.schemainfer.protogen.domain.ProtoLine;
 import com.example.schemainfer.protogen.utils.Constants;
 import com.example.schemainfer.protogen.utils.SchemaInferConfig;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SaveMode;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,9 +43,13 @@ public class TransformProtoIntoSparkDataset {
             return p.getValue() != null;
         }).map(o -> {
             String protoName = o.getKey() ;
-            String gspath = "gs://" + outputBucketName + path + "/" + protoName + "/" +  protoName + ".proto" ;
+            String shortProtoName = TransformProtobufHierarchy.determineRelativeFileName(protoName);
+            String gspath = "gs://" + outputBucketName + "/" + path + "/" + shortProtoName   ;
             Dataset<Row> sparkrows = spark.createDataFrame(o.getValue(), ProtoLine.class);
-            sparkrows.write().format("txt").save(gspath) ;
+            Dataset<Row> sortedDS = sparkrows.sort("line_number");
+            sortedDS.repartition(1).select("col0", "col1", "col2", "col3", "col4")
+                    .write().option("delimiter", "\t").mode(SaveMode.Overwrite).csv(gspath);
+
             return o.getValue();
         }).collect(Collectors.toList());
 
@@ -59,6 +60,8 @@ public class TransformProtoIntoSparkDataset {
         LOG.info("Total ProtoLines : " + protoLineList.size()) ;
         Dataset<Row> bigqueryRows = spark.createDataFrame(protoLineList, ProtoLine.class);
 
+
+
         LOG.info("Total BigQuery Rows: " + bigqueryRows.count()) ;
 
         SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance() ;
@@ -66,7 +69,12 @@ public class TransformProtoIntoSparkDataset {
         String outbqdataset = schemaInferConfig.getBqdatasetName() ;
 
         if (!Constants.isLocal) {
-            bigqueryRows.write()
+            bigqueryRows.select(functions.concat(functions.col("col0"),functions.lit(','),
+                    functions.col("col1"),functions.lit(','),
+                    functions.col("col2"),functions.lit(','),
+                    functions.col("col3"),functions.lit(','),
+                    functions.col("col4")).as("line"), functions.col("file_name"))
+                    .write()
                     .format("bigquery")
                     .option("temporaryGcsBucket", SchemaInferConfig.getInstance().getGcsTempBucketName())
                     .mode(SaveMode.Overwrite)

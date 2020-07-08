@@ -23,22 +23,18 @@
   <properties>
     <maven-shade-plugin.version>3.2.3</maven-shade-plugin.version>
     <guava.version>23.2-jre</guava.version>
-    <!--    <guava.version>28.2-jre</guava.version>-->
-    <!--    <guava.version>15.0</guava.version>-->
   </properties>
 
   <repositories>
     <repository>
-      <id>cloudera-repos</id>
-      <name>Cloudera Repos</name>
-      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+      <id>central</id>
+      <name>Maven Central</name>
+      <layout>default</layout>
+      <url>https://repo1.maven.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </repository>
-
-    <repository>
-      <id>jitpack.io</id>
-      <url>https://jitpack.io</url>
-    </repository>
-
   </repositories>
 
   <build>
@@ -53,42 +49,11 @@
         </configuration>
       </plugin>
 
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <configuration>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-              <mainClass>com.example.schemainfer.protogen.javaudf.SeqFilesScan</mainClass>
-            </manifest>
-          </archive>
-        </configuration>
-        <executions>
-          <execution>
-            <id>make-assembly</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <version>1.4.1</version>
-        <configuration>
-          <rules><dependencyConvergence/></rules>
-        </configuration>
-      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
+        <version>${maven-shade-plugin.version}</version>
         <executions>
           <execution>
             <phase>package</phase>
@@ -96,31 +61,35 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>com.example.schemainfer.protogen.javaudf.SeqFilesScan</mainClass>
-                </transformer>
-              </transformers>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>
                   <excludes>
-                    <exclude>META-INF/maven/**</exclude>
                     <exclude>META-INF/*.SF</exclude>
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
                   </excludes>
                 </filter>
               </filters>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>com.example.schemainfer.protogen.javaudf.SeqFilesScan</mainClass>
+                </transformer>
+              </transformers>
+
+              <finalName>original-schemainfer-${project.version}-shaded</finalName>
               <relocations>
                 <relocation>
-                  <pattern>com</pattern>
-                  <shadedPattern>repackaged.com.google.common</shadedPattern>
-                  <includes>
-                    <include>com.google.common.**</include>
-                  </includes>
+                  <pattern>com.google.common</pattern>
+                  <shadedPattern>shaded.com.google.common</shadedPattern>
                 </relocation>
               </relocations>
+              <artifactSet>
+                <includes>
+                  <include>*:*</include>
+                </includes>
+              </artifactSet>
+
             </configuration>
           </execution>
         </executions>
@@ -130,21 +99,19 @@
   </build>
 
   <dependencies>
-    <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
-    <!--    <dependency>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-    &lt;!&ndash;           <version>15.0</version>&ndash;&gt;
-    &lt;!&ndash;      <version>${guava.version}</version>&ndash;&gt;
-        </dependency>-->
 
-    <!-- https://mvnrepository.com/artifact/args4j/args4j -->
+    <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>29.0-jre</version>
+    </dependency>
+
     <dependency>
       <groupId>args4j</groupId>
       <artifactId>args4j</artifactId>
       <version>2.33</version>
     </dependency>
-
 
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -174,35 +141,27 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.tika</groupId>
-      <artifactId>tika-parsers</artifactId>
-      <version>1.24.1</version>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-jsonSchema</artifactId>
+      <version>2.11.0</version>
     </dependency>
-
+    
     <dependency>
-      <groupId>org.apache.tika</groupId>
-      <artifactId>tika-dl</artifactId>
-      <version>1.24.1</version>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20200518</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-simple -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
       <version>1.7.30</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>1.7.30</version>
-    </dependency>
-
-    <dependency>
-      <groupId>args4j</groupId>
-      <artifactId>args4j</artifactId>
-      <version>2.33</version>
     </dependency>
 
     <dependency>
@@ -219,34 +178,8 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-jsonSchema -->
-    <dependency>
-      <groupId>com.fasterxml.jackson.module</groupId>
-      <artifactId>jackson-module-jsonSchema</artifactId>
-      <version>2.11.0</version>
-    </dependency>
-
-    <!-- https://mvnrepository.com/artifact/com.google.cloud/google-cloud-storage -->
-<!--
-    <dependency>
-      <groupId>com.google.cloud</groupId>
-      <artifactId>google-cloud-storage</artifactId>
-    </dependency>
--->
-
   </dependencies>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>com.google.cloud</groupId>
-        <artifactId>libraries-bom</artifactId>
-        <version>7.0.0</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
 
 </project>

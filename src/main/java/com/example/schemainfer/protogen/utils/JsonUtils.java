@@ -3,9 +3,10 @@ package com.example.schemainfer.protogen.utils;
 import com.example.schemainfer.protogen.javaudf.Protomap;
 import com.example.schemainfer.protogen.json.EventJsonSchema;
 import com.example.schemainfer.protogen.rules.InferJsonDatatype;
-import com.github.openjson.JSONArray;
-import com.github.openjson.JSONException;
-import com.github.openjson.JSONObject;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spark_project.guava.collect.HashMultimap;
@@ -99,21 +100,7 @@ public class JsonUtils {
                 return false ;
             }
         }
-        boolean isValidJson = JsonUtils.isJSONValid(value);
-        if (isValidJson) {
-            //String pr = "key: " + key + "\t\t\t--> " + value + "\t\t " + value;
-            //LOG.info(pr) ;
-            Multimap<String, String> entityMap = extractValuesFromJson(value, protomapList);
-            if (entityMap != null) {
-                addEntitiesToProtomap(key, protomapList, entityMap);
-                allMap.putAll(entityMap);
-            } else {
-                LOG.info("jjSonObj Could not get row details for {}", value);
-                System.out.println("jjSonObj Could not get row details for : " + value);
-            }
-        } else {
-            allMainKeyValue(key, value, allMap, protomapList);
-        }
+
         return true ;
     }
 
