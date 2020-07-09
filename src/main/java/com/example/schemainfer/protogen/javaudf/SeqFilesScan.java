@@ -242,9 +242,10 @@ public class SeqFilesScan {
         dataSet1.printSchema();
         LOG.info("GOT top schema data: " + dataSet1.count());
         dataSet1.show();
-        String datasetname = SchemaInferConfig.getInstance().getBqdatasetName() ;
+        SchemaInferConfig inferConfig = SchemaInferConfig.getInstance() ;
+        String datasetname = inferConfig.getBqdatasetName() ;
 
-        if (!Constants.isLocal) {
+        if (!inferConfig.isLocal()) {
             dataSet1.write()
                     .format("bigquery")
                     .option("temporaryGcsBucket", SchemaInferConfig.getInstance().getGcsTempBucketName())
@@ -295,13 +296,21 @@ public class SeqFilesScan {
 
     public static Map<ObjectNode, Integer> countDistinctObjectNodes(JavaRDD<ObjectNode> data) {
 
+        SchemaInferConfig inferConfig = SchemaInferConfig.getInstance() ;
+        int numPartitions = inferConfig.getNumberOfPartitions() ;
+        JavaPairRDD<ObjectNode, Integer> counts ;
         JavaPairRDD<ObjectNode, Integer> ones = data
                 .mapToPair(s -> new Tuple2<>(s, 1));
-       // JavaPairRDD<ObjectNode, Long> counts = ones.reduceByKey((i1, i2) -> (i1 + i2)l);
-        JavaPairRDD<ObjectNode, Integer> counts = ones.reduceByKey((i1, i2) -> {
-           return  (i1 + i2) ;
-          //  return i.longValue();
-        }, 10);
+
+        if (numPartitions > 0) {
+           counts = ones.reduceByKey((i1, i2) -> {
+                return  (i1 + i2) ;
+            }, numPartitions);
+        } else {
+            counts = ones.reduceByKey((i1, i2) -> {
+                return  (i1 + i2) ;
+            });
+        }
 
         return counts.collectAsMap();
     }

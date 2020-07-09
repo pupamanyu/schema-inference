@@ -63,6 +63,13 @@ public class SchemaInferConfig {
         return configInstance;
     }
 
+    public boolean isLocal() {
+        if (this.runMode != null && this.runMode.equalsIgnoreCase(Constants.RUN_MODE.Local.name())) {
+            return true ;
+        }
+        return false ;
+    }
+
     public void build(String runMode, String inputFile, String outputFile, String gcsTempBucketName, String outputBQtableName,
                       boolean writeSampleDataWIthSchema, Integer numberOfTopSchemasToMerge, String bsDatasetName, Integer numOfPartitions) {
         this.runMode = runMode ;

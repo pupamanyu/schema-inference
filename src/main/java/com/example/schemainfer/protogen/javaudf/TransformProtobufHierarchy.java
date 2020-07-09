@@ -7,6 +7,7 @@ import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.validation.Schema;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,6 +24,7 @@ public class TransformProtobufHierarchy {
     private boolean isLocal = CommonUtils.isLocal();
     String applicationId;
     SparkSession spark;
+    SchemaInferConfig config ;
 
     private static final Logger LOG = LoggerFactory.getLogger(TransformProtobufHierarchy.class);
 
@@ -30,10 +32,11 @@ public class TransformProtobufHierarchy {
         this.inProtoMap = inProtoMap;
         this.spark = spark;
         applicationId = spark.sparkContext().applicationId();
+        this.config = SchemaInferConfig.getInstance() ;
     }
 
     public void generate() {
-        this.isLocal = Constants.isLocal;
+        this.isLocal = this.config.isLocal() ;
         LOG.info("** Input keyHierarchy: " + inProtoMap.toString());
         createMetadataFileWriter();
         checkShortProtoMap();

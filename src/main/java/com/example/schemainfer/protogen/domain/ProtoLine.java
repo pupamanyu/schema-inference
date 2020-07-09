@@ -25,6 +25,12 @@ public class ProtoLine {
         this.concatenateColmns();
     }
 
+    public ProtoLine(String job_id, String file_name, String concat_columns) {
+        this.job_id = job_id;
+        this.file_name = file_name;
+        this.concat_columns = concat_columns;
+    }
+
     private void concatenateColmns() {
         StringBuffer sb = new StringBuffer() ;
         if (col0 != null) {

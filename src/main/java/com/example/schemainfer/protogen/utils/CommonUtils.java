@@ -128,10 +128,10 @@ public class CommonUtils {
         });
     }
 
-    public static void printPairRows(JavaPairRDD<String, String> parsedRDD) {
+    public static void printPairRows(JavaPairRDD<String, String> parsedRDD, String reftext) {
         final List<Tuple2<String, String>> tuple2s = parsedRDD.take(100);
         tuple2s.forEach((s) -> {
-            System.out.println(" Pair = " + s._1 + " \t::\t" + s._2);
+            System.out.println(reftext + " Pair = " + s._1 + " \t::\t" + s._2);
         });
     }
 

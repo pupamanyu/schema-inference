@@ -53,15 +53,13 @@ public class TransformProtoIntoSparkDataset {
             String shortProtoName = TransformProtobufHierarchy.determineRelativeFileName(protoName);
             String gspath = "gs://" + outputBucketName + "/" + path + "/" + shortProtoName;
             Dataset<Row> sparkrows = spark.createDataFrame(o.getValue(), ProtoLine.class);
-            Dataset<Row> sortedDS = sparkrows.sort("line_number");
-           // sortedDS.show();
-            final Dataset<Row> rowDataset = sortedDS.select("concat_columns")
-                    // .option("delimiter", "\t")
+            Dataset<Row> sortedDataset = sparkrows.sort("line_number");
+            sortedDataset.select("concat_columns")
                     .repartition(1)
-                    .sort("line_number");
-            //////    .write()
-                /////    .option("delimiter", "\n")
-                /////    .mode(SaveMode.Overwrite).csv(gspath);
+                    .sort("line_number")
+                    .write()
+                    .option("delimiter", "\n")
+                   .mode(SaveMode.Overwrite).text(gspath);
 
           //  rowDataset.show();
             return o.getValue();
@@ -75,12 +73,12 @@ public class TransformProtoIntoSparkDataset {
         Dataset<Row> bigqueryRows = spark.createDataFrame(protoLineList, ProtoLine.class);
 
         LOG.info("Total BigQuery Rows: " + bigqueryRows.count());
-      //  bigqueryRows.show();
+
         SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance();
         String outbqtable = schemaInferConfig.getOutputBQtableName();
         String outbqdataset = schemaInferConfig.getBqdatasetName();
 
-        if (false) {
+        if (!schemaInferConfig.isLocal()) {
             bigqueryRows.select(functions.col("concat_columns").as("line"), functions.col("file_name"), functions.col("line_number"), functions.col("job_id"))
                     .write()
                     .format("bigquery")
@@ -93,15 +91,10 @@ public class TransformProtoIntoSparkDataset {
     }
 
     private void collapseProtoLinesByFile(Dataset<Row> inRows) {
-   /* Dataset<String> cclines = bigqueryRows.map((MapFunction<Row, String>) row -> row.<String>getAs("concat_columns"), Encoders.STRING());
 
-    Dataset<String> newYears = cclines.flatMap((FlatMapFunction<String, String>) year -> {
-        return Arrays.asList(year).iterator();
-    }, Encoders.STRING()) ;*/
-
-        Dataset<Row> bigqueryRows = inRows.sort("file_name", "line_number");
+        Dataset<Row> bigqueryRows = inRows.repartition(1).sort("file_name", "line_number");
         final JavaRDD<Row> rowJavaRDD = bigqueryRows.toJavaRDD();
-       // CommonUtils.printRows(rowJavaRDD) ;
+        CommonUtils.printRows(rowJavaRDD) ;
 
         JavaPairRDD<String, String> keyvaluepair =
                 rowJavaRDD.flatMapToPair(
@@ -111,6 +104,7 @@ public class TransformProtoIntoSparkDataset {
                             return Arrays.asList(new Tuple2<>(filename, cc)).iterator();
                         });
 
+        CommonUtils.printPairRows(keyvaluepair, "keyValuePair") ;
 
         JavaPairRDD<String, String> collapsedRows = keyvaluepair.reduceByKey((c1, c2) -> {
             StringBuffer buff = new StringBuffer();
@@ -119,7 +113,7 @@ public class TransformProtoIntoSparkDataset {
             return buff.toString();
         });
 
-        CommonUtils.printPairRows(collapsedRows) ;
+        CommonUtils.printPairRows(collapsedRows, "collapsed") ;
 
        // LOG.info("Total Collapse BigQuery Rows count: " + collapsedRows.count());
        // LOG.info("Total Collapse BigQuery Rows: " + collapsedRows.toString());
@@ -145,7 +139,7 @@ public class TransformProtoIntoSparkDataset {
         String outbqtable = "protocollapsed" ;
         //rowDataset.show();
 
-        if (false) {
+        if (!schemaInferConfig.isLocal()) {
             rowDataset.select(functions.col("line"), functions.col("file_name"), functions.col("job_id"))
                     .write()
                     .format("bigquery")
