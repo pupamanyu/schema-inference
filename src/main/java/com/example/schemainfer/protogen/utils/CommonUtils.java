@@ -17,10 +17,13 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spark_project.guava.collect.Multimap;
+import scala.Tuple2;
 
 public class CommonUtils {
 
@@ -105,10 +108,30 @@ public class CommonUtils {
         }
     }
 
+    public static void printTop20F(List<Row> parsedRDD) {
+        parsedRDD.forEach((s) -> {
+            LOG.info(" CollRow = " + s.getAs("line"));
+        });
+    }
+
     private static void printTop20F(JavaRDD<String> parsedRDD) {
         List<String> top5List = parsedRDD.take(20);
         top5List.forEach((s) -> {
             LOG.info(" FValue = " + s);
+        });
+    }
+
+    public static void printRows(JavaRDD<Row> parsedRDD) {
+        List<Row> top5List = parsedRDD.take(100);
+        top5List.forEach((s) -> {
+            LOG.info(" RowValue = " + s);
+        });
+    }
+
+    public static void printPairRows(JavaPairRDD<String, String> parsedRDD) {
+        final List<Tuple2<String, String>> tuple2s = parsedRDD.take(100);
+        tuple2s.forEach((s) -> {
+            System.out.println(" Pair = " + s._1 + " \t::\t" + s._2);
         });
     }
 
