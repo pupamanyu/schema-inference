@@ -109,7 +109,7 @@ public class TransformProtobufHierarchy {
                 addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, "O", "option", "java_multiple_files =", "true", null, null);
 
                 String capitalizedName = StringUtils.capitalize(shortProtoName);
-                String messageLine = "message " + capitalizedName + "\t{\n";
+                String messageLine = "message " + capitalizedName ; //+ "\t{\n";
                 addSparkLine(lineNumber.getAndIncrement(), sparkProtoLinesList, outProtoTextLinesList, relativeFileName, "M", "message", capitalizedName, "\t{", null, null);
 
                 AtomicInteger colCtr = new AtomicInteger();
@@ -232,11 +232,8 @@ public class TransformProtobufHierarchy {
             String fileName = determineProtoFileName(longProtoName, isLocal);
             String gcsfileName = determineGCSProtoFileName(longProtoName);
 
-
             outSparkDatasetMap.put(longProtoName, new ArrayList<>());
             outProtoTextMap.put(longProtoName, new ArrayList<>());
-
-
         }
     }
 
@@ -365,9 +362,9 @@ public class TransformProtobufHierarchy {
         int colNum = i.incrementAndGet();
         String protoDataype = InferProtoDatatype.matchProtoDatatype(transformedDatatype);
         String columnLine = "\t" + protoDataype + "\t" + colName + "\t = " + colNum + " \n";
-        if (!this.isLocal) {
-            addSparkLine(lineNumber++, sparkList, textLinesList, relativeFileName, "C", col0, protoDataype, colName, String.valueOf(colNum), null);
-        }
+
+        addSparkLine(lineNumber++, sparkList, textLinesList, relativeFileName, "C", col0, protoDataype, colName, String.valueOf(colNum), null);
+
         return colName;
     }
 
