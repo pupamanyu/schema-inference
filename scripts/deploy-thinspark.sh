@@ -23,7 +23,7 @@ SPARKNUMBEROFEXECUTORS=$3
 SPARKDYNAMICALLOCATIONFLAG=$4
 SPARKDRIVERMEMORYGB=57
 SPARKOPTIONS="spark.dynamicAllocation.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.shuffle.service.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.executor.cores=${SPARKEXECUTORCORES},spark.executor.memory=${SPARKEXECUTORMEMORYGB}g,spark.num.executors=${SPARKNUMBEROFEXECUTORS},spark.driver.memory=${SPARKDRIVERMEMORYGB}g"
-CLUSTERNAME=schema-${SPARKEXECUTORCORES}cores-${SPARKEXECUTORMEMORYGB}gb-${SPARKNUMBEROFEXECUTORS}-executors-${SPARKDYNAMICALLOCATIONFLAG}
+CLUSTERNAME=cluster-$(python -c "from uuid import uuid4; print(str(uuid4())).split('-')[0]")-${SPARKEXECUTORCORES}cores-${SPARKEXECUTORMEMORYGB}gb-${SPARKNUMBEROFEXECUTORS}-executors-${SPARKDYNAMICALLOCATIONFLAG}
 GCS_PROTO_DIR="gs://schema-inference-out/${CLUSTERNAME}/protoudf"
 
 gcloud beta dataproc clusters create ${CLUSTERNAME} --enable-component-gateway --region us-central1 --subnet rdp-data-platform-dev-subnet-01 --no-address \
