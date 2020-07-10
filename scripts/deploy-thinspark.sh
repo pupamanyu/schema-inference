@@ -12,7 +12,6 @@ JAR_NAME=original-schemainfer-0.0.1-shaded.jar
 GCS_JAR_ARTIFACT_BUCKET=gs://dataproc-temp-us-central1-21673414111-z46je66v/artifacts/thin
 GCS_BUCKET_DATA_OUT=gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out4
 GCS_BUCKET_DATA_OUT2=gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out4
-GCS_PROTO_DIR="gs://schema-inference-out/${CLUSTERNAME}/protoudf"
 BQ_GCS_TEMP_BUCKET_NAME="schema-inference-out"
 BQ_DATASET="schema-inference-out"
 BQ_TABLENAME="proto_schema5"
@@ -25,6 +24,7 @@ SPARKDYNAMICALLOCATIONFLAG=$4
 SPARKDRIVERMEMORYGB=57
 SPARKOPTIONS="spark.dynamicAllocation.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.shuffle.service.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.executor.cores=${SPARKEXECUTORCORES},spark.executor.memory=${SPARKEXECUTORMEMORYGB}g,spark.num.executors=${SPARKNUMBEROFEXECUTORS},spark.driver.memory=${SPARKDRIVERMEMORYGB}g"
 CLUSTERNAME=schema-${SPARKEXECUTORCORES}cores-${SPARKEXECUTORMEMORYGB}gb-${SPARKNUMBEROFEXECUTORS}-executors-${SPARKDYNAMICALLOCATIONFLAG}
+GCS_PROTO_DIR="gs://schema-inference-out/${CLUSTERNAME}/protoudf"
 
 gcloud beta dataproc clusters create ${CLUSTERNAME} --enable-component-gateway --region us-central1 --subnet rdp-data-platform-dev-subnet-01 --no-address \
   --zone us-central1-c \
