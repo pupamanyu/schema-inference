@@ -12,6 +12,10 @@ JAR_NAME=original-schemainfer-0.0.1-shaded.jar
 GCS_JAR_ARTIFACT_BUCKET=gs://dataproc-temp-us-central1-21673414111-z46je66v/artifacts/thin
 GCS_BUCKET_DATA_OUT=gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out4
 GCS_BUCKET_DATA_OUT2=gs://dataproc-temp-us-central1-21673414111-z46je66v/sampledata/out4
+GCS_PROTO_DIR="gs://schema-inference-out/${CLUSTERNAME}/protoudf"
+BQ_GCS_TEMP_BUCKET_NAME="schema-inference-out"
+BQ_DATASET="schema-inference-out"
+BQ_TABLENAME="proto_schema5"
 INPUT_DATA=gs://schema-inference-sample-data/internal__legs_gameevents/dt=2020-05-15/h=06/batchid=190936cc-84d9-45f9-af54-81de9f460ee2/000000_0
 REGION_NAME=us-central1
 SPARKEXECUTORCORES=$1
@@ -39,4 +43,9 @@ gcloud dataproc jobs submit spark \
   --region $REGION_NAME \
   --jar $GCS_JAR_ARTIFACT_BUCKET/$JAR_NAME \
   -- -m cluster -i $INPUT_DATA \
-  -s true -o schema-inference-out -ds schema_infer -t schema-inference-out -tb proto_schema5 -pa ${SPARKNUMBEROFEXECUTORS}
+  -s true \
+  -o ${GCS_PROTO_DIR} \
+  -t ${BQ_GCS_TEMP_BUCKET_NAME} \
+  -ds ${BQ_DATASET} \
+  -tb ${BQ_TABLENAME} \
+  -pa ${SPARKNUMBEROFEXECUTORS}
