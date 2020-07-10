@@ -42,7 +42,7 @@ public class TransformProtoIntoSparkDataset {
         String logName = this.spark.logName();
         final String applicationId = spark.sparkContext().applicationId();
         String outputBucketName = SchemaInferConfig.getInstance().getOutputBucketName();
-        String path = "protodf";
+       // String path = "protodf";
 
         final List<List<ProtoLine>> listList = outSparkDatasetMap.entrySet().stream().filter((v1) -> {
             return v1 != null;
@@ -51,7 +51,8 @@ public class TransformProtoIntoSparkDataset {
         }).map(o -> {
             String protoName = o.getKey();
             String shortProtoName = TransformProtobufHierarchy.determineRelativeFileName(protoName);
-            String gspath = "gs://" + outputBucketName + "/" + path + "/" + shortProtoName;
+         //   String gspath = "gs://" + outputBucketName + "/" + path + "/" + shortProtoName;
+            String gspath = outputBucketName + "/" + shortProtoName;
             Dataset<Row> sparkrows = spark.createDataFrame(o.getValue(), ProtoLine.class);
             Dataset<Row> sortedDataset = sparkrows.sort("line_number");
             sortedDataset.select("concat_columns")
