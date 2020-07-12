@@ -60,7 +60,7 @@ public class TransformProtoIntoSparkDataset {
                     .sort("line_number")
                     .write()
                     .option("delimiter", "\n")
-                   .mode(SaveMode.Overwrite).text(gspath);
+                   .mode(SaveMode.Overwrite).csv(gspath);
 
           //  rowDataset.show();
             return o.getValue();
@@ -88,7 +88,21 @@ public class TransformProtoIntoSparkDataset {
                     .save(outbqdataset + "." + outbqtable);
         }
 
-        collapseProtoLinesByFile(bigqueryRows) ;
+        collapseProtoLinesByFile2(bigqueryRows) ;
+    }
+
+    private void collapseProtoLinesByFile2(Dataset<Row> inRows) {
+        List<Row> rowList = inRows.repartition(1).repartition(1).groupBy("file_name").agg(functions.collect_list("concat_columns").as("line")).collectAsList();
+        String jobid = spark.sparkContext().applicationId();
+        List<ProtoLine> protoList = new ArrayList<ProtoLine>() ;
+        rowList.forEach(i -> {
+            String filename = i.getAs("file_name") ;
+            String line = i.getAs("line") ;
+            ProtoLine pl = new ProtoLine(jobid, filename, line) ;
+            protoList.add(pl) ;
+        });
+
+        persistBQ(protoList) ;
     }
 
     private void collapseProtoLinesByFile(Dataset<Row> inRows) {
@@ -130,6 +144,10 @@ public class TransformProtoIntoSparkDataset {
             bqProtoList.add(bqproto);
         }
 
+        persistBQ(bqProtoList);
+    }
+
+    private void persistBQ(List<ProtoLine> bqProtoList) {
         Dataset<Row> sparkrows = spark.createDataFrame(bqProtoList, ProtoLine.class);
         final Dataset<Row> rowDataset = sparkrows.select(functions.col("concat_columns").as("line"), functions.col("file_name"), functions.col("job_id"));
         final List<Row> rowList = rowDataset.collectAsList();
