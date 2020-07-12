@@ -14,6 +14,10 @@ import org.apache.spark.sql.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
+import scala.collection.JavaConverters;
+import scala.collection.Seq;
+import scala.collection.convert.Decorators;
+import scala.collection.mutable.WrappedArray;
 
 import java.io.Serializable;
 import java.util.*;
@@ -58,6 +62,7 @@ public class TransformProtoIntoSparkDataset {
             sortedDataset.select("concat_columns")
                     .repartition(1)
                     .sort("line_number")
+                    .repartition(1)
                     .write()
                     .option("delimiter", "\n")
                    .mode(SaveMode.Overwrite).csv(gspath);
@@ -78,9 +83,11 @@ public class TransformProtoIntoSparkDataset {
         SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance();
         String outbqtable = schemaInferConfig.getOutputBQtableName();
         String outbqdataset = schemaInferConfig.getBqdatasetName();
+        final Dataset<Row> dataset = bigqueryRows.select(functions.col("concat_columns").as("line"), functions.col("file_name"), functions.col("line_number"), functions.col("job_id"))
+                .sort("line_number");
 
         if (!schemaInferConfig.isLocal()) {
-            bigqueryRows.select(functions.col("concat_columns").as("line"), functions.col("file_name"), functions.col("line_number"), functions.col("job_id"))
+            dataset
                     .write()
                     .format("bigquery")
                     .option("temporaryGcsBucket", SchemaInferConfig.getInstance().getGcsTempBucketName())
@@ -88,16 +95,32 @@ public class TransformProtoIntoSparkDataset {
                     .save(outbqdataset + "." + outbqtable);
         }
 
-        collapseProtoLinesByFile2(bigqueryRows) ;
+        collapseProtoLinesByFile2(dataset) ;
     }
 
     private void collapseProtoLinesByFile2(Dataset<Row> inRows) {
-        List<Row> rowList = inRows.repartition(1).repartition(1).groupBy("file_name").agg(functions.collect_list("concat_columns").as("line")).collectAsList();
+        List<Row> rowList = inRows.groupBy("file_name").agg(functions.collect_list("line").as("linelist")).repartition(1).collectAsList();
         String jobid = spark.sparkContext().applicationId();
         List<ProtoLine> protoList = new ArrayList<ProtoLine>() ;
-        rowList.forEach(i -> {
-            String filename = i.getAs("file_name") ;
-            String line = i.getAs("line") ;
+
+        final Seq<Row> rowSeq = JavaConverters.asScalaBuffer(rowList).toSeq();
+        final Decorators.AsJava<List<Row>> listAsJava = JavaConverters.seqAsJavaListConverter(rowSeq) ;
+        final List<Row> rowList1 = listAsJava.asJava() ;
+
+        rowList1.forEach(i -> {
+            String filename = i.<String>getAs("file_name").toString();
+            //final Object lineArray = i.getAs("line") ;
+            final Seq<Object> iSeq = i.getSeq(1) ;
+
+            WrappedArray wrappedArray = (WrappedArray) iSeq ;
+            StringBuilder buff = new StringBuilder();
+            scala.collection.Iterator<String> iterator = wrappedArray.iterator();
+            while (iterator.hasNext()) {
+                String line1 = iterator.next() ;
+                buff.append(line1).append("\n") ;
+            }
+            String line = buff.toString() ;
+            LOG.info("Line after append: " + line) ;
             ProtoLine pl = new ProtoLine(jobid, filename, line) ;
             protoList.add(pl) ;
         });
@@ -105,47 +128,7 @@ public class TransformProtoIntoSparkDataset {
         persistBQ(protoList) ;
     }
 
-    private void collapseProtoLinesByFile(Dataset<Row> inRows) {
 
-        Dataset<Row> bigqueryRows = inRows.repartition(1).sort("file_name", "line_number");
-        final JavaRDD<Row> rowJavaRDD = bigqueryRows.toJavaRDD();
-        CommonUtils.printRows(rowJavaRDD) ;
-
-        JavaPairRDD<String, String> keyvaluepair =
-                rowJavaRDD.flatMapToPair(
-                        line -> {
-                            String cc = line.<String>getAs("concat_columns");
-                            String filename = line.<String>getAs("file_name");
-                            return Arrays.asList(new Tuple2<>(filename, cc)).iterator();
-                        });
-
-        CommonUtils.printPairRows(keyvaluepair, "keyValuePair") ;
-
-        JavaPairRDD<String, String> collapsedRows = keyvaluepair.reduceByKey((c1, c2) -> {
-            StringBuffer buff = new StringBuffer();
-            buff.append(c1).append("\n").append(c2);
-
-            return buff.toString();
-        });
-
-        CommonUtils.printPairRows(collapsedRows, "collapsed") ;
-
-       // LOG.info("Total Collapse BigQuery Rows count: " + collapsedRows.count());
-       // LOG.info("Total Collapse BigQuery Rows: " + collapsedRows.toString());
-        final Map<String, String> stringMap = collapsedRows.collectAsMap();
-        LOG.info("LastMap: " + stringMap.toString());
-        String applicationId = spark.sparkContext().applicationId();
-        List<ProtoLine> bqProtoList = new ArrayList<>();
-
-        for (Map.Entry<String, String> e : stringMap.entrySet()) {
-            String filename = e.getKey();
-            String coll = e.getValue();
-            ProtoLine bqproto = new ProtoLine(applicationId, filename, coll);
-            bqProtoList.add(bqproto);
-        }
-
-        persistBQ(bqProtoList);
-    }
 
     private void persistBQ(List<ProtoLine> bqProtoList) {
         Dataset<Row> sparkrows = spark.createDataFrame(bqProtoList, ProtoLine.class);
@@ -168,36 +151,7 @@ public class TransformProtoIntoSparkDataset {
         }
     }
 
-    private void sortRDD(JavaRDD<Row> rowJavaRDD) {
-        /*        final JavaRDD<Row> rowJavaRDD1 = rowJavaRDD.sortBy(new Function<Row, String>() {
-            private static final long serialVersionUID = 1L;
 
-            @Override
-            public String call(Row value) throws Exception {
-                String filename = value.getAs("file_name");
-                String lineNumber = value.getAs("line_number");
-                return filename + lineNumber;
-            }
-        }, true, 1);*/
-
-
-/*        JavaRDD<Row> rowJavaRDD1 = rowJavaRDD.keyBy(new Function<Row, String> () {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public String call(Row row) throws Exception {
-                String filename = row.getAs("file_name");
-                String lineNumber = row.getAs("line_number");
-                return filename + lineNumber;
-            }
-        }).sortByKey(new LineComparator2()).values();*/
-
-        final JavaRDD<Row> rowJavaRDD1 = rowJavaRDD.keyBy(new FindKeyFunction()).sortByKey(new LineComparator2(), true, 1).values();
-        // Dataset<Row> sparkrowsss = spark.createDataFrame(rowJavaRDD1, ProtoLine.class);
-        // sparkrowsss.show();
-        // final List<Row> rowList = rowJavaRDD.collect();
-
-    }
 
     class LineComparator2 implements Comparator<String>, Serializable {
         private static final long serialVersionUID = 1L;
