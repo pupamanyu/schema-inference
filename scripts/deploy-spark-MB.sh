@@ -27,7 +27,7 @@ NUMWORKERS=$7
 
 SPARKDRIVERMEMORYGB=57
 
-EXTRAJAVAOPTIONS="-server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled  -XX:+CMSScavengeBeforeRemark -XX:CMSInitiatingOccupancyFraction=${INITIALFRACTION} -XX:+CMSParallelRemarkEnabled -XX:UseCMSInitiatingOccupancyOnly"
+EXTRAJAVAOPTIONS="-server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled  -XX:+CMSScavengeBeforeRemark -XX:CMSInitiatingOccupancyFraction=${INITIALFRACTION} -XX:+CMSParallelRemarkEnabled -XX:+UseCMSInitiatingOccupancyOnly"
 DRIVERJAVAOPTIONS="${EXTRAJAVAOPTIONS}"
 EXECUTORJAVAOPTIONS="${EXTRAJAVAOPTIONS}"
 
