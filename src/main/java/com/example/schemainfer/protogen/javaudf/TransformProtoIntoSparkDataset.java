@@ -1,23 +1,15 @@
 package com.example.schemainfer.protogen.javaudf;
 
 import com.example.schemainfer.protogen.domain.ProtoLine;
-import com.example.schemainfer.protogen.functions.FindKeyFunction;
+import com.example.schemainfer.protogen.functions.ConcatLineFunction;
 import com.example.schemainfer.protogen.utils.CommonUtils;
-import com.example.schemainfer.protogen.utils.Constants;
 import com.example.schemainfer.protogen.utils.SchemaInferConfig;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
-import scala.collection.JavaConverters;
-import scala.collection.Seq;
-import scala.collection.convert.Decorators;
-import scala.collection.mutable.WrappedArray;
 
 import java.io.Serializable;
 import java.util.*;
@@ -84,7 +76,7 @@ public class TransformProtoIntoSparkDataset {
         String outbqtable = schemaInferConfig.getOutputBQtableName();
         String outbqdataset = schemaInferConfig.getBqdatasetName();
         final Dataset<Row> dataset = bigqueryRows.select(functions.col("concat_columns").as("line"), functions.col("file_name"), functions.col("line_number"), functions.col("job_id"))
-                .sort("line_number");
+                .sort("file_name", "line_number");
 
         if (!schemaInferConfig.isLocal()) {
             dataset
@@ -95,40 +87,44 @@ public class TransformProtoIntoSparkDataset {
                     .save(outbqdataset + "." + outbqtable);
         }
 
-        collapseProtoLinesByFile2(dataset) ;
-    }
-
-    private void collapseProtoLinesByFile2(Dataset<Row> inRows) {
-        List<Row> rowList = inRows.groupBy("file_name").agg(functions.collect_list("line").as("linelist")).repartition(1).collectAsList();
-        String jobid = spark.sparkContext().applicationId();
-        List<ProtoLine> protoList = new ArrayList<ProtoLine>() ;
-
-        final Seq<Row> rowSeq = JavaConverters.asScalaBuffer(rowList).toSeq();
-        final Decorators.AsJava<List<Row>> listAsJava = JavaConverters.seqAsJavaListConverter(rowSeq) ;
-        final List<Row> rowList1 = listAsJava.asJava() ;
-
-        rowList1.forEach(i -> {
-            String filename = i.<String>getAs("file_name").toString();
-            //final Object lineArray = i.getAs("line") ;
-            final Seq<Object> iSeq = i.getSeq(1) ;
-
-            WrappedArray wrappedArray = (WrappedArray) iSeq ;
-            StringBuilder buff = new StringBuilder();
-            scala.collection.Iterator<String> iterator = wrappedArray.iterator();
-            while (iterator.hasNext()) {
-                String line1 = iterator.next() ;
-                buff.append(line1).append("\n") ;
-            }
-            String line = buff.toString() ;
-            LOG.info("Line after append: " + line) ;
-            ProtoLine pl = new ProtoLine(jobid, filename, line) ;
-            protoList.add(pl) ;
-        });
-
+        //collapseProtoLinesByFile2(dataset) ;
+        final List<ProtoLine> protoList = concatLinesByFile(dataset);
         persistBQ(protoList) ;
     }
 
+    private List<ProtoLine> concatLinesByFile(Dataset<Row> inRows) {
 
+            Dataset<Row> bigqueryRows = inRows.sort("file_name", "line_number");
+            final JavaRDD<Row> rowJavaRDD = bigqueryRows.toJavaRDD().repartition(1);
+            CommonUtils.printRows(rowJavaRDD) ;
+
+            JavaPairRDD<String, Row> keyvaluepair =
+                    rowJavaRDD.flatMapToPair(
+                            line -> {
+                                String cc = line.<String>getAs("line");
+                                String filename = line.<String>getAs("file_name");
+                                Integer line_number = line.<Integer>getAs("line_number");
+                                System.out.println("LIINNEEE:" + line_number) ;
+                                return Arrays.asList(new Tuple2<>(filename, line)).iterator();
+                            });
+
+        final Tuple2<String, Row> first = keyvaluepair.first() ;
+
+        final JavaPairRDD<String, Row> collapsedRows = keyvaluepair.reduceByKey(new ConcatLineFunction());
+
+        final Map<String, Row> stringRowMap = collapsedRows.collectAsMap();
+            String applicationId = spark.sparkContext().applicationId();
+            List<ProtoLine> bqProtoList = new ArrayList<>();
+
+            for (Map.Entry<String, Row> e : stringRowMap.entrySet()) {
+                String filename = e.getKey();
+                Row row = e.getValue();
+                String concatline = row.<String>getAs("line").toString();
+                ProtoLine bqproto = new ProtoLine(applicationId, filename, concatline);
+                bqProtoList.add(bqproto);
+            }
+            return bqProtoList ;
+    }
 
     private void persistBQ(List<ProtoLine> bqProtoList) {
         Dataset<Row> sparkrows = spark.createDataFrame(bqProtoList, ProtoLine.class);
@@ -150,8 +146,6 @@ public class TransformProtoIntoSparkDataset {
                     .save(outbqdataset + "." + outbqtable);
         }
     }
-
-
 
     class LineComparator2 implements Comparator<String>, Serializable {
         private static final long serialVersionUID = 1L;
