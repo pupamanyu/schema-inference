@@ -73,7 +73,7 @@ echo "gcloud dataproc jobs submit spark \
   -pa ${SPARKNUMBEROFEXECUTORS}"
 gcloud dataproc jobs submit spark \
   --cluster ${CLUSTERNAME}  \
-  --properties ${SPARKOPTIONS} \
+  --properties "${SPARKOPTIONS}" \
   --jars gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar \
   --region $REGION_NAME \
   --jar $GCS_JAR_ARTIFACT_BUCKET/$JAR_NAME \
