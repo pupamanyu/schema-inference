@@ -35,6 +35,9 @@ DATASIZENAME="241m"
 NUMWORKERS=20
 fi
 
+spark.driver.extraJavaOptions=-XX:MaxPermSize=128m -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:+CMSScavengeBeforeRemark -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled
+
+
 SPARKDRIVERMEMORYGB=57
 SPARKOPTIONS="spark.dynamicAllocation.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.shuffle.service.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.executor.cores=${SPARKEXECUTORCORES},spark.executor.instances=${SPARKNUMBEROFEXECUTORS},spark.executor.memory=${SPARKEXECUTORMEMORYMB}m,spark.num.executors=${SPARKNUMBEROFEXECUTORS},spark.driver.memory=${SPARKDRIVERMEMORYGB}g"
 CLUSTERNAME=$(python -c "from uuid import uuid4; print(str(uuid4())).split('-')[0]")-${DATASIZENAME}-${SPARKEXECUTORCORES}cores-${SPARKEXECUTORMEMORYMB}mb-${SPARKNUMBEROFEXECUTORS}-executors-${SPARKDYNAMICALLOCATIONFLAG}
