@@ -3,7 +3,7 @@
 
 usage() {
   echo "Usage:"
-  echo "$0: $0 <EXECUTORCORES> <EXECUTORMEMORYMB> <NUMBEROFEXECUTORS> <SPARKDYNAMICALLOCATION-FLAG> <DATASIZE>"
+  echo "$0: $0 <EXECUTORCORES> <EXECUTORMEMORYMB> <NUMBEROFEXECUTORS> <SPARKDYNAMICALLOCATION-FLAG> <DATASIZE> <FRACTION>"
   exit 1
 }
 
@@ -21,9 +21,9 @@ SPARKEXECUTORCORES=$1
 SPARKEXECUTORMEMORYMB=$2
 SPARKNUMBEROFEXECUTORS=$3
 SPARKDYNAMICALLOCATIONFLAG=$4
-
-
 DATASIZE=$5
+
+INITIALFRACTION=$6
 SPARKDRIVERMEMORYGB=57
 if [ ${DATASIZE} == "S" ]; then
 INPUT_DATA=gs://schema-inference-sample-data/internal__legs_gameevents/dt=2020-05-15/h=06/batchid=190936cc-84d9-45f9-af54-81de9f460ee2/000000_0
@@ -35,11 +35,13 @@ DATASIZENAME="241m"
 NUMWORKERS=20
 fi
 
-spark.driver.extraJavaOptions=-XX:MaxPermSize=128m -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:+CMSScavengeBeforeRemark -XX:CMSInitiatingOccupancyFraction=70 -XX:+CMSParallelRemarkEnabled
+EXTRAJAVAOPTIONS="-XX:MaxPermSize=128m -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:+CMSScavengeBeforeRemark -XX:CMSInitiatingOccupancyFraction=${INITIALFRACTION} -XX:+CMSParallelRemarkEnabled"
+DRIVERJAVAOPTIONS="spark.driver.extraJavaOptions=${EXTRAJAVAOPTIONS}"
+EXECUTORJAVAOPTIONS="spark.executor.extraJavaOptions=${EXTRAJAVAOPTIONS}"
 
 
-SPARKDRIVERMEMORYGB=57
-SPARKOPTIONS="spark.dynamicAllocation.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.shuffle.service.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.executor.cores=${SPARKEXECUTORCORES},spark.executor.instances=${SPARKNUMBEROFEXECUTORS},spark.executor.memory=${SPARKEXECUTORMEMORYMB}m,spark.num.executors=${SPARKNUMBEROFEXECUTORS},spark.driver.memory=${SPARKDRIVERMEMORYGB}g"
+
+SPARKOPTIONS="spark.dynamicAllocation.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.shuffle.service.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.executor.cores=${SPARKEXECUTORCORES},spark.executor.instances=${SPARKNUMBEROFEXECUTORS},spark.executor.memory=${SPARKEXECUTORMEMORYMB}m,spark.num.executors=${SPARKNUMBEROFEXECUTORS},spark.driver.memory=${SPARKDRIVERMEMORYGB}g,${EXECUTORJAVAOPTIONS},${DRIVERJAVAOPTIONS}"
 CLUSTERNAME=$(python -c "from uuid import uuid4; print(str(uuid4())).split('-')[0]")-${DATASIZENAME}-${SPARKEXECUTORCORES}cores-${SPARKEXECUTORMEMORYMB}mb-${SPARKNUMBEROFEXECUTORS}-executors-${SPARKDYNAMICALLOCATIONFLAG}
 GCS_PROTO_DIR="gs://schema-inference-out/protoudf"
 
