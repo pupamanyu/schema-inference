@@ -27,11 +27,11 @@ NUMWORKERS=$7
 
 SPARKDRIVERMEMORYGB=57
 
-EXTRAJAVAOPTIONS="-XX:MaxPermSize=128m -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled -XX:+CMSScavengeBeforeRemark -XX:CMSInitiatingOccupancyFraction=${INITIALFRACTION} -XX:+CMSParallelRemarkEnabled"
-DRIVERJAVAOPTIONS="spark.driver.extraJavaOptions='${EXTRAJAVAOPTIONS}'"
-EXECUTORJAVAOPTIONS="spark.executor.extraJavaOptions='${EXTRAJAVAOPTIONS}'"
+EXTRAJAVAOPTIONS="-server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled  -XX:+CMSScavengeBeforeRemark -XX:CMSInitiatingOccupancyFraction=${INITIALFRACTION} -XX:+CMSParallelRemarkEnabled -XX:UseCMSInitiatingOccupancyOnly"
+DRIVERJAVAOPTIONS="${EXTRAJAVAOPTIONS}"
+EXECUTORJAVAOPTIONS="${EXTRAJAVAOPTIONS}"
 
-SPARKOPTIONS="${EXECUTORJAVAOPTIONS},spark.dynamicAllocation.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.shuffle.service.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.executor.cores=${SPARKEXECUTORCORES},spark.executor.instances=${SPARKNUMBEROFEXECUTORS},spark.executor.memory=${SPARKEXECUTORMEMORYMB}m,spark.num.executors=${SPARKNUMBEROFEXECUTORS},spark.driver.memory=${SPARKDRIVERMEMORYGB}g"
+SPARKOPTIONS="spark.executor.extraJavaOptions=\"${EXECUTORJAVAOPTIONS}\",spark.dynamicAllocation.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.shuffle.service.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.executor.cores=${SPARKEXECUTORCORES},spark.executor.instances=${SPARKNUMBEROFEXECUTORS},spark.executor.memory=${SPARKEXECUTORMEMORYMB}m,spark.num.executors=${SPARKNUMBEROFEXECUTORS},spark.driver.memory=${SPARKDRIVERMEMORYGB}g"
 CLUSTERNAME=c-$(python -c "from uuid import uuid4; print(str(uuid4())).split('-')[0]")-${NUMWORKERS}nodes-${SPARKEXECUTORCORES}core-${SPARKEXECUTORMEMORYMB}mb-${SPARKNUMBEROFEXECUTORS}-execs
 GCS_PROTO_DIR="gs://schema-inference-out/protoudf"
 
