@@ -31,7 +31,7 @@ EXTRAJAVAOPTIONS="-server -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:+CMSClass
 DRIVERJAVAOPTIONS="${EXTRAJAVAOPTIONS}"
 EXECUTORJAVAOPTIONS="${EXTRAJAVAOPTIONS}"
 
-SPARKOPTIONS="spark.executor.extraJavaOptions=\"${EXECUTORJAVAOPTIONS}\",spark.dynamicAllocation.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.shuffle.service.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.executor.cores=${SPARKEXECUTORCORES},spark.executor.instances=${SPARKNUMBEROFEXECUTORS},spark.executor.memory=${SPARKEXECUTORMEMORYMB}m,spark.num.executors=${SPARKNUMBEROFEXECUTORS},spark.driver.memory=${SPARKDRIVERMEMORYGB}g"
+SPARKOPTIONS="spark:spark.executor.extraJavaOptions=${EXECUTORJAVAOPTIONS},spark:spark.shuffle.service.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark:spark.executor.cores=${SPARKEXECUTORCORES},spark:spark.executor.instances=${SPARKNUMBEROFEXECUTORS},spark:spark.executor.memory=${SPARKEXECUTORMEMORYMB}m,spark:spark.num.executors=${SPARKNUMBEROFEXECUTORS},spark:spark.driver.memory=${SPARKDRIVERMEMORYGB}g"
 CLUSTERNAME=c-$(python -c "from uuid import uuid4; print(str(uuid4())).split('-')[0]")-${NUMWORKERS}nodes-${SPARKEXECUTORCORES}core-${SPARKEXECUTORMEMORYMB}mb-${SPARKNUMBEROFEXECUTORS}-execs
 GCS_PROTO_DIR="gs://schema-inference-out/protoudf"
 
@@ -73,12 +73,7 @@ echo "gcloud dataproc jobs submit spark \
   -pa ${SPARKNUMBEROFEXECUTORS}"
 gcloud dataproc jobs submit spark \
   --cluster ${CLUSTERNAME}  \
-  --conf "spark.executor.extraJavaOptions=${EXECUTORJAVAOPTIONS}" \
-  --conf "spark.executor.cores=${SPARKEXECUTORCORES}" \
-  --conf "spark.executor.instances=${SPARKNUMBEROFEXECUTORS}" \
-  --conf "spark.executor.memory=${SPARKEXECUTORMEMORYMB}m" \
-  --conf "spark.num.executors=${SPARKNUMBEROFEXECUTORS}" \
-  --conf "spark.driver.memory=${SPARKDRIVERMEMORYGB}g" \
+  --properties ${SPARKOPTIONS} \
   --jars gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar \
   --region $REGION_NAME \
   --jar $GCS_JAR_ARTIFACT_BUCKET/$JAR_NAME \
