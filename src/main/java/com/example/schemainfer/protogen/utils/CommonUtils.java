@@ -17,10 +17,13 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spark_project.guava.collect.Multimap;
+import scala.Tuple2;
 
 public class CommonUtils {
 
@@ -105,10 +108,30 @@ public class CommonUtils {
         }
     }
 
+    public static void printTop20F(List<Row> parsedRDD) {
+        parsedRDD.forEach((s) -> {
+            LOG.info(" CollRow = " + s.getAs("line"));
+        });
+    }
+
     private static void printTop20F(JavaRDD<String> parsedRDD) {
         List<String> top5List = parsedRDD.take(20);
         top5List.forEach((s) -> {
             LOG.info(" FValue = " + s);
+        });
+    }
+
+    public static void printRows(JavaRDD<Row> parsedRDD) {
+        List<Row> top5List = parsedRDD.take(100);
+        top5List.forEach((s) -> {
+            LOG.info(" RowValue = " + s);
+        });
+    }
+
+    public static void printPairRows(JavaPairRDD<String, String> parsedRDD, String reftext) {
+        final List<Tuple2<String, String>> tuple2s = parsedRDD.take(100);
+        tuple2s.forEach((s) -> {
+            System.out.println(reftext + " Pair = " + s._1 + " \t::\t" + s._2);
         });
     }
 
@@ -124,8 +147,8 @@ public class CommonUtils {
         return true;
     }
 
-    private static Map<String, Long> sortMap2(Map<ObjectNode, Long> unSortedMap) {
-        LinkedHashMap<String, Long> reverseSortedMap = new LinkedHashMap<>();
+    private static Map<String, Integer> sortMap2(Map<ObjectNode, Integer> unSortedMap) {
+        LinkedHashMap<String, Integer> reverseSortedMap = new LinkedHashMap<>();
 
         //Use Comparator.reverseOrder() for reverse ordering
         unSortedMap.entrySet()
@@ -173,13 +196,14 @@ public class CommonUtils {
         return sb.toString();
     }
 
-    public static List<SchemaCount> calcDistinctObjectNodesCount2(Map<ObjectNode, Long> objectNodeLongMap, long totalCount) {
-        Map<String, Long> sorttedMap = sortMap2(objectNodeLongMap);
+    public static List<SchemaCount> calcDistinctObjectNodesCount2(Map<ObjectNode, Integer> objectNodeLongMap, long totalCount) {
+        Map<String, Integer> sorttedMap = sortMap2(objectNodeLongMap);
         List<SchemaCount> schemaCountList = new ArrayList();
         final List<SchemaCount> schemaCounts = sorttedMap.entrySet().stream().limit(20).map(entry -> {
             SchemaCount schemaCount = new SchemaCount();
             schemaCount.setSchema((String) entry.getKey().toString());
-            long thisCount = (Long) entry.getValue();
+           // long thisCount = (Long) entry.getValue();
+            final Integer thisCount = entry.getValue();
             schemaCount.setCount(thisCount);
             schemaCount.setPercent(calculatePercentage(thisCount, totalCount));
             schemaCountList.add(schemaCount);
@@ -189,6 +213,7 @@ public class CommonUtils {
         return schemaCounts ;
     }
 
+/*
     public static List<SchemaCount> calcDistinctObjectNodesCount(Map<String, Long> objectNodeLongMap, long totalCount) {
         Map<String, Long> sorttedMap = sortMap(objectNodeLongMap);
 
@@ -206,6 +231,7 @@ public class CommonUtils {
             SchemaCount schemaCount = new SchemaCount();
             schemaCount.setSchema((String) entry.getKey());
             long thisCount = (Long) entry.getValue();
+            entry.getValue()
             schemaCount.setCount(thisCount);
             schemaCount.setPercent(calculatePercentage(thisCount, totalCount));
             schemaCountList.add(schemaCount);
@@ -214,6 +240,7 @@ public class CommonUtils {
 
         return schemaCountList;
     }
+*/
 
     public static Float calculatePercentage(long current, long total) {
         if (total == 0) {

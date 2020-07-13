@@ -10,6 +10,7 @@ public class ProtoLine {
     private String col2 ;
     private String col3 ;
     private String col4 ;
+    private String concat_columns ;
 
     public ProtoLine(Integer lineNumber, String jobId, String fileName, String lineType, Object col0, Object col1, Object col2, Object col3, Object col4) {
         this.line_number = lineNumber ;
@@ -21,6 +22,36 @@ public class ProtoLine {
         this.col2 = (String) col2 ;
         this.col3 = (String) col3 ;
         this.col4 = (String) col4 ;
+        this.concatenateColmns();
+    }
+
+    public ProtoLine(String job_id, String file_name, String concat_columns) {
+        this.job_id = job_id;
+        this.file_name = file_name;
+        this.concat_columns = concat_columns;
+    }
+
+    private void concatenateColmns() {
+        StringBuffer sb = new StringBuffer() ;
+        if (col0 != null) {
+            sb.append(col0).append("\t") ;
+        }
+        if (col1 != null) {
+            sb.append(col1).append("\t")  ;
+        }
+        if (col2 != null) {
+            sb.append(col2).append("\t")  ;
+        }
+        if (col3 != null) {
+            if (line_type.equalsIgnoreCase("C")) {
+                sb.append("\t=\t") ;
+            }
+            sb.append(col3).append("\t")  ;
+        }
+        if (col4 != null) {
+            sb.append(col4).append("\t") ;
+        }
+        this.concat_columns = sb.toString() ;
     }
 
     public Integer getLine_number() {
@@ -94,4 +125,11 @@ public class ProtoLine {
         this.col4 = col4;
     }
 
+    public String getConcat_columns() {
+        return concat_columns;
+    }
+
+    public void setConcat_columns(String concat_columns) {
+        this.concat_columns = concat_columns;
+    }
 }

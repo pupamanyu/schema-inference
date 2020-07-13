@@ -35,7 +35,7 @@ public class SeqScanAsJson {
         JavaSparkContext sc = new JavaSparkContext(conf);
         SparkSession spark = SparkSession.builder().config(conf).getOrCreate();
         SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance() ;
-        schemaInferConfig.build(Constants.RUN_MODE.Local.name(), null, null, null, null, true, 20,  null);
+        schemaInferConfig.build(Constants.RUN_MODE.Local.name(), null, null, null, null, true, 20,  null, 0);
 
         final Dataset<Row> rowJavaRDD = readDataFileAsJson(spark);
         convertRDDIntoString(rowJavaRDD, spark) ;

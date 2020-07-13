@@ -10,12 +10,17 @@ public class SchemaInferConfig {
     private  String outputBQtableName ;
     private Integer numberOfTopSchemasToMerge ;
     private String bqdatasetName ;
+    public Integer numberOfPartitions ;
 
     public String getBqdatasetName() {
         return bqdatasetName;
     }
     public static SchemaInferConfig getConfigInstance() {
         return configInstance;
+    }
+
+    public Integer getNumberOfPartitions() {
+        return numberOfPartitions;
     }
 
     public String getRunMode() {
@@ -58,8 +63,15 @@ public class SchemaInferConfig {
         return configInstance;
     }
 
+    public boolean isLocal() {
+        if (this.runMode != null && this.runMode.equalsIgnoreCase(Constants.RUN_MODE.Local.name())) {
+            return true ;
+        }
+        return false ;
+    }
+
     public void build(String runMode, String inputFile, String outputFile, String gcsTempBucketName, String outputBQtableName,
-                      boolean writeSampleDataWIthSchema, Integer numberOfTopSchemasToMerge, String bsDatasetName) {
+                      boolean writeSampleDataWIthSchema, Integer numberOfTopSchemasToMerge, String bsDatasetName, Integer numOfPartitions) {
         this.runMode = runMode ;
         this.inputFile = inputFile ;
         this.outputBucketName = outputFile ;
@@ -68,6 +80,7 @@ public class SchemaInferConfig {
         this.skipWriteSampleDataWIthSchema = writeSampleDataWIthSchema ;
         this.numberOfTopSchemasToMerge = numberOfTopSchemasToMerge ;
         this.bqdatasetName = bsDatasetName ;
+        this.numberOfPartitions = numOfPartitions ;
     }
 
 }

@@ -28,6 +28,7 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -82,6 +83,9 @@ public class SeqFilesScan {
     @Option(name = "-n", aliases = "--numerOfTopSchemasToMerge", usage = "Number of top schemas to be consider for merge", required = false)
     private String numberOfTopSchemasToMerge;
 
+    @Option(name = "-pa", aliases = "--numberOfPartitions", usage = "Number of Partitions for repartitioning", required = false)
+    private String numberOfPartitions ;
+
     public SeqFilesScan() {
     }
 
@@ -117,7 +121,8 @@ public class SeqFilesScan {
         SchemaInferConfig schemaInferConfig = SchemaInferConfig.getInstance();
         boolean skipSampleDatawrite = isSkipSampleDatawrite();
         int numberOfSchemasToCOnsider = getNumberOfTopSchemasToMerge() ;
-        schemaInferConfig.build(this.runmode, this.inputFile, this.outputBucketName, this.gcsTempBucketName, this.bqouttablename, skipSampleDatawrite, numberOfSchemasToCOnsider, this.bqdatasetname);
+        int numOfPartitions = getNumberOfPartitions() ;
+        schemaInferConfig.build(this.runmode, this.inputFile, this.outputBucketName, this.gcsTempBucketName, this.bqouttablename, skipSampleDatawrite, numberOfSchemasToCOnsider, this.bqdatasetname, numOfPartitions);
     }
 
     private boolean isSkipSampleDatawrite() {
@@ -143,6 +148,21 @@ public class SeqFilesScan {
             }
         }
         return numberOfTopSchemas;
+    }
+
+    private Integer getNumberOfPartitions() {
+        int numberOfPartitions  ;
+        if (this.numberOfPartitions == null || this.numberOfPartitions.isEmpty()) {
+            numberOfPartitions = 0 ;
+        } else {
+            try {
+                numberOfPartitions = Integer.valueOf(this.numberOfPartitions);
+            } catch (NumberFormatException nbe) {
+                LOG.warn("Arguments of 'number of schemas to be considered for merge' is not a valid integer. Default to application default: " + Constants.defaultNumberOfTopSchemas);
+                numberOfPartitions = 0 ;
+            }
+        }
+        return numberOfPartitions;
     }
 
     /**
@@ -190,9 +210,19 @@ public class SeqFilesScan {
         LOG.info("RDD out: " + rdd.toString());
         JavaRDD<Text> values = rdd.values();
         LOG.info("Values: " + values.toDebugString());
-        LOG.info("Count of values: " + rdd.values().count());
-        JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap31(values);
-        LOG.info("Finished Transforming data to ObjectNode: " + parsedRDD.count());
+       // LOG.info("Count of values: " + rdd.values().count());
+        LOG.info("Count of #Partitions: " + rdd.getNumPartitions()) ;
+        int numOfPartitions = SchemaInferConfig.getInstance().getNumberOfPartitions() ;
+        JavaPairRDD<BytesWritable, Text> pairedRDD ;
+        if (numOfPartitions > 0) {
+            pairedRDD = rdd.repartition(numOfPartitions);
+        } else {
+            pairedRDD = rdd ;
+        }
+        LOG.info("Count of #Partitions AFTER: " + pairedRDD.getNumPartitions()) ;
+
+        JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap31(pairedRDD.values());
+       //// LOG.info("Finished Transforming data to ObjectNode: " + parsedRDD.count());
         processTransformations(spark, parsedRDD);
     }
 
@@ -212,9 +242,10 @@ public class SeqFilesScan {
         dataSet1.printSchema();
         LOG.info("GOT top schema data: " + dataSet1.count());
         dataSet1.show();
-        String datasetname = SchemaInferConfig.getInstance().getBqdatasetName() ;
+        SchemaInferConfig inferConfig = SchemaInferConfig.getInstance() ;
+        String datasetname = inferConfig.getBqdatasetName() ;
 
-        if (!Constants.isLocal) {
+        if (!inferConfig.isLocal()) {
             dataSet1.write()
                     .format("bigquery")
                     .option("temporaryGcsBucket", SchemaInferConfig.getInstance().getGcsTempBucketName())
@@ -245,7 +276,7 @@ public class SeqFilesScan {
 
         processSchemaColMapDF(rowDataset);
 
-        postProcessAfterDistinctForSchemaMap(spark, parsedRDD, totalCount);
+        ////////postProcessAfterDistinctForSchemaMap(spark, parsedRDD, totalCount);
     }
 
     private static void processTransformations(SparkSession spark, JavaRDD<ObjectNode> parsedRDD) {
@@ -254,14 +285,37 @@ public class SeqFilesScan {
         LOG.info("Parsed RDD count: " + totalCount);
 
         LOG.info("Starting processTransformations without writing sample data") ;
-        Map<ObjectNode, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
-            return v1;
-        }).countByValue();
+       // Map<ObjectNode, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
+        //    return v1;
+       // }).countByValue();
+
+        Map<ObjectNode, Integer> objectNodeLongMap = countDistinctObjectNodes(parsedRDD) ;
 
         findDistinctAndPersist(spark, totalCount, objectNodeLongMap);
     }
 
-    private static void findDistinctAndPersist(SparkSession spark, Long totalCount, Map<ObjectNode, Long> objectNodeLongMap) {
+    public static Map<ObjectNode, Integer> countDistinctObjectNodes(JavaRDD<ObjectNode> data) {
+
+        SchemaInferConfig inferConfig = SchemaInferConfig.getInstance() ;
+        int numPartitions = inferConfig.getNumberOfPartitions() ;
+        JavaPairRDD<ObjectNode, Integer> counts ;
+        JavaPairRDD<ObjectNode, Integer> ones = data
+                .mapToPair(s -> new Tuple2<>(s, 1));
+
+        if (numPartitions > 0) {
+           counts = ones.reduceByKey((i1, i2) -> {
+                return  (i1 + i2) ;
+            }, numPartitions);
+        } else {
+            counts = ones.reduceByKey((i1, i2) -> {
+                return  (i1 + i2) ;
+            });
+        }
+
+        return counts.collectAsMap();
+    }
+
+    private static void findDistinctAndPersist(SparkSession spark, Long totalCount, Map<ObjectNode, Integer> objectNodeLongMap) {
         LOG.info("Distinct RDD count value " + objectNodeLongMap.size());
         List<SchemaCount> schemaCountList = CommonUtils.calcDistinctObjectNodesCount2(objectNodeLongMap, totalCount);
         EventJsonSchema mergedTopSchema = convertSchemaCountRDDtoDataset(spark, schemaCountList);
@@ -271,12 +325,13 @@ public class SeqFilesScan {
         transformProtobufHierarchy.generate();
     }
 
+    /*
     private static void postProcessAfterDistinctForSchemaMap(SparkSession spark, JavaRDD<SchemaColumnMap> parsedRDD, Long totalCount) {
         Map<ObjectNode, Long> objectNodeLongMap = parsedRDD.map((v1) -> {
             return v1.getSchema();
         }).countByValue();
         findDistinctAndPersist(spark, totalCount, objectNodeLongMap);
-    }
+    } */
 
     private static EventJsonSchema convertSchemaCountRDDtoDataset(SparkSession spark, List<SchemaCount> schemaCountList) {
         Dataset<Row> dataset = spark.createDataFrame(schemaCountList, SchemaCount.class);
