@@ -22,14 +22,17 @@ SPARKEXECUTORMEMORYMB=$2
 SPARKNUMBEROFEXECUTORS=$3
 SPARKDYNAMICALLOCATIONFLAG=$4
 
+
 DATASIZE=$5
 SPARKDRIVERMEMORYGB=57
 if [ ${DATASIZE} == "S" ]; then
 INPUT_DATA=gs://schema-inference-sample-data/internal__legs_gameevents/dt=2020-05-15/h=06/batchid=190936cc-84d9-45f9-af54-81de9f460ee2/000000_0
 DATASIZENAME="23m"
+NUMWORKERS=10
 else
 INPUT_DATA=gs://schema-inference-sample-data/internal__legs_gameevents/dt=2020-05-15/h=06/batchid=190936cc-84d9-45f9-af54-81de9f460ee2
 DATASIZENAME="241m"
+NUMWORKERS=20
 fi
 
 SPARKDRIVERMEMORYGB=57
@@ -41,7 +44,7 @@ gcloud beta dataproc clusters create ${CLUSTERNAME} --enable-component-gateway -
   --zone us-central1-c \
   --properties "spark:spark.dynamicAllocation.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark:spark.shuffle.service.enabled=${SPARKDYNAMICALLOCATIONFLAG}" \
   --master-machine-type n1-standard-16 --master-boot-disk-type pd-ssd --master-boot-disk-size 1000 --num-master-local-ssds 1 \
-  --num-workers 10 \
+  --num-workers ${NUMWORKERS} \
   --worker-machine-type n1-standard-16 --worker-boot-disk-type pd-ssd --worker-boot-disk-size 1000 --num-worker-local-ssds 1 \
 --image-version 1.5-debian10 \
 --scopes 'https://www.googleapis.com/auth/cloud-platform' \
