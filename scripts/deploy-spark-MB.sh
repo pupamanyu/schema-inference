@@ -32,7 +32,7 @@ DRIVERJAVAOPTIONS="${EXTRAJAVAOPTIONS}"
 EXECUTORJAVAOPTIONS="${EXTRAJAVAOPTIONS}"
 
 SPARKOPTIONS="spark.driver.extraJavaOptions=${DRIVERJAVAOPTIONS},spark.executor.extraJavaOptions=${EXECUTORJAVAOPTIONS},spark.shuffle.service.enabled=${SPARKDYNAMICALLOCATIONFLAG},spark.executor.cores=${SPARKEXECUTORCORES},spark.executor.instances=${SPARKNUMBEROFEXECUTORS},spark.executor.memory=${SPARKEXECUTORMEMORYMB}m,spark.num.executors=${SPARKNUMBEROFEXECUTORS},spark.driver.memory=${SPARKDRIVERMEMORYGB}g"
-CLUSTERNAME=c-$(python -c "from uuid import uuid4; print(str(uuid4())).split('-')[0]")-${NUMWORKERS}nodes-${SPARKEXECUTORCORES}core-${SPARKEXECUTORMEMORYMB}mb-${SPARKNUMBEROFEXECUTORS}-execs
+CLUSTERNAME=c-$(python -c "from uuid import uuid4; print(str(uuid4())).split('-')[0]")-${NUMWORKERS}nodes-${SPARKEXECUTORCORES}core-${SPARKEXECUTORMEMORYMB}mb-${SPARKNUMBEROFEXECUTORS}-exec-${INITIALFRACTION}heap
 GCS_PROTO_DIR="gs://schema-inference-out/protoudf"
 
 echo "Dataproc Cluster create for recording in Sheets: "
