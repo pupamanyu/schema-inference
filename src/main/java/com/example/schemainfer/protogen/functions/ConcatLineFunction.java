@@ -1,5 +1,6 @@
 package com.example.schemainfer.protogen.functions;
 
+import com.example.schemainfer.protogen.javaudf.TransformProtoIntoSparkDataset;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
@@ -10,6 +11,8 @@ import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -17,6 +20,8 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ConcatLineFunction implements Function2<Row, Row, Row>, Serializable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ConcatLineFunction.class);
 
     @Override
     public Row call(Row c1, Row c2) throws Exception {
@@ -43,12 +48,21 @@ public class ConcatLineFunction implements Function2<Row, Row, Row>, Serializabl
         String line2 = c2.<String>getAs("line");
         Object newLineNumber = 0  ;
 
-        if ( line_number1 == null || line_number2 == null || line_number1 < line_number2) {
+        if (line_number1 == null) {
             buff.append(line1).append("\n").append(line2);
-        } else {
+        }
+        if (line_number2 == null) {
             buff.append(line2).append("\n").append(line1);
         }
-        Row rr = RowFactory.create(file_name, buff.toString(), job_id);
+
+        if (line_number1 == null && line_number2 == null) {
+            if (line_number1 < line_number2) {
+                buff.append(line1).append("\n").append(line2);
+            } else {
+                buff.append(line2).append("\n").append(line1);
+            }
+        }
+
         StructType schema = getStruct() ;
         Object[] valuesarray = new String[4] ;
         valuesarray[0] = file_name ;
@@ -57,7 +71,12 @@ public class ConcatLineFunction implements Function2<Row, Row, Row>, Serializabl
         } catch (ArrayStoreException ee) {
             valuesarray[1] = null ;
         }
-        valuesarray[2] = buff.toString() ;
+        System.out.println(String.format("Reduce Line1: %s) %s", line_number1, line1)) ;
+        System.out.println(String.format("Reduce Line2: %s) %s", line_number2, line2)) ;
+        String concatenatedLine = buff.toString() ;
+        System.out.println("Cocatenated Line: " + concatenatedLine) ;
+
+        valuesarray[2] = concatenatedLine ;
         valuesarray[3] = job_id ;
         Row newRow = new GenericRowWithSchema(valuesarray, schema) ;
         return newRow ;

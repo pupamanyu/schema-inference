@@ -222,7 +222,7 @@ public class SeqFilesScan {
         LOG.info("Count of #Partitions AFTER: " + pairedRDD.getNumPartitions()) ;
 
         JavaRDD<ObjectNode> parsedRDD = transformFValueIntoProromap31(pairedRDD.values());
-        LOG.info("Finished Transforming data to ObjectNode: " + parsedRDD.count());
+       //// LOG.info("Finished Transforming data to ObjectNode: " + parsedRDD.count());
         processTransformations(spark, parsedRDD);
     }
 

@@ -73,6 +73,7 @@ public class TransformProtobufHierarchy {
             List<ProtoLine> sparkProtoLinesList = null;
             List<String> outProtoTextLinesList = null;
             AtomicInteger lineNumber = new AtomicInteger();
+            lineNumber.getAndIncrement() ;
             try {
                 Map<String, String> colDatatypeMap = proto.getValue();
 
