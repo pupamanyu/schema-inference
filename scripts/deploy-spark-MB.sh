@@ -73,7 +73,12 @@ echo "gcloud dataproc jobs submit spark \
   -pa ${SPARKNUMBEROFEXECUTORS}"
 gcloud dataproc jobs submit spark \
   --cluster ${CLUSTERNAME}  \
-  --properties ${SPARKOPTIONS} \
+  --conf "spark.executor.extraJavaOptions=${EXECUTORJAVAOPTIONS}" \
+  --conf "spark.executor.cores=${SPARKEXECUTORCORES}" \
+  --conf "spark.executor.instances=${SPARKNUMBEROFEXECUTORS}" \
+  --conf "spark.executor.memory=${SPARKEXECUTORMEMORYMB}m" \
+  --conf "spark.num.executors=${SPARKNUMBEROFEXECUTORS}" \
+  --conf "spark.driver.memory=${SPARKDRIVERMEMORYGB}g" \
   --jars gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar \
   --region $REGION_NAME \
   --jar $GCS_JAR_ARTIFACT_BUCKET/$JAR_NAME \
