@@ -47,15 +47,22 @@ public class ConcatLineFunction implements Function2<Row, Row, Row>, Serializabl
         String line1 = c1.<String>getAs("line");
         String line2 = c2.<String>getAs("line");
         Object newLineNumber = 0  ;
+        boolean appended=false ;
 
-        if (line_number1 == null) {
-            buff.append(line1).append("\n").append(line2);
+        if (line_number1 == null ) {
+            if (!appended) {
+                buff.append(line1).append("\n").append(line2);
+                appended=true ;
+            }
         }
-        if (line_number2 == null) {
-            buff.append(line2).append("\n").append(line1);
+        if (line_number2 == null ) {
+            if (!appended) {
+                buff.append(line2).append("\n").append(line1);
+                appended=true ;
+            }
         }
 
-        if (line_number1 == null && line_number2 == null) {
+        if (line_number1 != null && line_number2 != null && !appended) {
             if (line_number1 < line_number2) {
                 buff.append(line1).append("\n").append(line2);
             } else {

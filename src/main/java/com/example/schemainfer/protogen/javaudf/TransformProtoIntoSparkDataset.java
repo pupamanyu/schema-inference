@@ -54,7 +54,7 @@ public class TransformProtoIntoSparkDataset {
             sortedDataset.select("concat_columns")
                     .repartition(1)
                     .sort("line_number")
-                    .repartition(1)
+                    //.repartition(1)
                     .write()
                     .option("delimiter", "\n")
                    .mode(SaveMode.Overwrite).csv(gspath);
@@ -94,8 +94,8 @@ public class TransformProtoIntoSparkDataset {
 
     private List<ProtoLine> concatLinesByFile(Dataset<Row> inRows) {
 
-            Dataset<Row> bigqueryRows = inRows.sort("file_name", "line_number");
-            final JavaRDD<Row> rowJavaRDD = bigqueryRows.toJavaRDD();
+            Dataset<Row> bigqueryRows = inRows.coalesce(1).sort("file_name", "line_number");
+            final JavaRDD<Row> rowJavaRDD = bigqueryRows.toJavaRDD().coalesce((1));
             //CommonUtils.printRows(rowJavaRDD) ;
 
             JavaPairRDD<String, Row> keyvaluepair =
@@ -106,7 +106,7 @@ public class TransformProtoIntoSparkDataset {
                                 Integer line_number = line.<Integer>getAs("line_number");
                                 System.out.println("LIINNEEE:" + line_number) ;
                                 return Arrays.asList(new Tuple2<>(filename, line)).iterator();
-                            }).repartition(1);
+                            }).coalesce(1).sortByKey();
 
         //CommonUtils.printRows(rowJavaRDD) ;
 
